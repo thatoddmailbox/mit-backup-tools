@@ -78,9 +78,9 @@ export class Gradescope implements Loader {
 				});
 
 				// TODO: remove me!!!
-				// if (i == 1) {
+				if (i == 1) {
 					break;
-				// }
+				}
 			}
 
 			return list;
@@ -163,18 +163,33 @@ export class Gradescope implements Loader {
 
 				const reactProps = JSON.parse(reactPropsStr.value);
 
-				console.log("reactProps", reactProps);
-				console.log("reactProps.paths.original_file_path", reactProps.paths.original_file_path);
 				const newPageMeta: GradescopeMeta = {
 					pageType: "assignmentDownload"
 				};
 
-				const req: SaveRequest = {
-					url: reactProps.paths.original_file_path,
-					title: meta.assignmentDir + "file.pdf",
-					format: "download",
-					loaderMeta: newPageMeta
-				};
+				console.log("reactProps", reactProps);
+				console.log("reactProps.paths.original_file_path", reactProps.paths.original_file_path);
+
+				let req: SaveRequest;
+				if (reactProps.paths.original_file_path != null) {
+					// it's a pdf
+					req = {
+						url: reactProps.paths.original_file_path,
+						title: meta.assignmentDir + "file.pdf",
+						format: "download",
+						loaderMeta: newPageMeta
+					};
+				} else if (reactProps.paths.submission_zip_path != null) {
+					// it's not a pdf
+					req = {
+						url: window.location.origin + reactProps.paths.submission_zip_path,
+						title: meta.assignmentDir + "file.zip",
+						format: "download",
+						loaderMeta: newPageMeta
+					};
+				} else {
+					throw new Error("idk how to download this");
+				}
 
 				return [req];
 			}, meta);

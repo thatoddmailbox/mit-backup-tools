@@ -1,9 +1,12 @@
 import puppeteer from "puppeteer";
 
+import { get } from "https";
+
 import { Gradescope } from "./loader/gradescope";
 import { Loader } from "./loader/loader";
 
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { createWriteStream } from "fs";
+import { mkdir, readFile } from "fs/promises";
 import { basename, dirname } from "path/posix";
 
 function delay(time: number) {
@@ -54,12 +57,45 @@ function delay(time: number) {
 
 	for (let i = 0; i < queue.length; i++) {
 		const item = queue[i];
+		console.log("item", item);
+
+		const fullPath = outputPath + item.title;
+
+		if (item.format == "download") {
+			console.log("let's download", item.url);
+
+			// TODO: cookies
+			// const cookies = await page.evaluate(() => document.cookie);
+			const userAgent = await page.evaluate(() => navigator.userAgent);
+
+			await new Promise<void>((resolve) => {
+				get(item.url, {
+					// hack that shouldn't be needed :)
+					rejectUnauthorized: false,
+					headers: {
+						// "Cookie": cookies,
+						"User-Agent": userAgent
+					},
+				}, (res) => {
+					const stream = createWriteStream(fullPath);
+					stream.on("finish", () => {
+						stream.close();
+						resolve();
+					});
+					res.pipe(stream);
+				});
+			});
+
+			console.log("Download complete");
+
+			continue;
+		}
+
 		if (item.url != "") {
 			await page.goto(item.url);
 		}
 		await page.waitForNetworkIdle();
 
-		const fullPath = outputPath + item.title;
 		console.log("fullPath", fullPath);
 		console.log("dirname(fullPath)", dirname(fullPath));
 		console.log("basename(fullPath)", basename(fullPath));
@@ -75,9 +111,9 @@ function delay(time: number) {
 		// await cdpSession
 
 		const newRequests = await loader.discoverMoreRequests(page, item);
-		for (let j = 0 ; j < newRequests.length; j++) {
+		for (let j = 0; j < newRequests.length; j++) {
 			const newRequest = newRequests[j];
-			queue.push(newRequest);
+			queue.splice(i + 1, 0, newRequest);
 		}
 	}
 
