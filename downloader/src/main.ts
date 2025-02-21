@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 
 import { get } from "https";
 
@@ -11,6 +11,65 @@ import { delay } from "./util";
 import { createWriteStream } from "fs";
 import { mkdir, readFile } from "fs/promises";
 import { basename, dirname } from "path/posix";
+
+async function download(browser: Browser, page: Page, url: string, fullPath: string) {
+	const userAgent = await page.evaluate(() => navigator.userAgent);
+
+	const domain = url.split("/")[2];
+	console.log("Domain is", domain);
+
+	const cookies = await browser.cookies();
+	console.log("cookies", cookies);
+	let cookieString = "";
+	for (let i = 0; i < cookies.length; i++){
+		const cookie = cookies[i];
+		if (cookie.domain != domain) {
+			continue;
+		}
+
+		cookieString += cookie.name + "=" + cookie.value + ";";
+	}
+
+	console.log("Cookies are", cookieString);
+
+	return await new Promise<void>((resolve, reject) => {
+		get(url, {
+			// hack that shouldn't be needed :)
+			rejectUnauthorized: false,
+			headers: {
+				"Cookie": cookieString,
+				"User-Agent": userAgent
+			},
+		}, (res) => {
+			if (res.statusCode == 302) {
+				const newURL = res.headers.location || "";
+				console.log("Following redirect to", newURL);
+
+				if (!newURL) {
+					throw new Error("Got redirect but no new location?");
+				}
+				if (newURL.includes("/login")) {
+					throw new Error("Got redirected to what seems like a login page...");
+				}
+
+				const result = download(browser, page, newURL, fullPath);
+				result.then(resolve);
+				result.catch(reject);
+				return;
+			}
+			if (res.statusCode != 200) {
+				throw new Error("Got unexpected status code " + res.statusCode);
+			}
+
+			const stream = createWriteStream(fullPath);
+			stream.on("finish", () => {
+				stream.close();
+				resolve();
+			});
+			res.pipe(stream);
+		});
+	});
+}
 
 (async () => {
 	console.log("Hello");
@@ -83,47 +142,7 @@ import { basename, dirname } from "path/posix";
 		if (item.format == "download") {
 			console.log("let's download", item.url);
 
-			// TODO: cookies
-			// const cookies = await page.evaluate(() => document.cookie);
-			const userAgent = await page.evaluate(() => navigator.userAgent);
-
-			const domain = item.url.split("/")[2];
-			console.log("Domain is", domain);
-
-			const cookies = await browser.cookies();
-			let cookieString = "";
-			for (let i = 0; i < cookies.length; i++){
-				const cookie = cookies[i];
-				if (cookie.domain != domain) {
-					break;
-				}
-
-				cookieString += cookie.name + "=" + cookie.value + ";";
-			}
-
-			console.log("Cookies are", cookieString);
-
-			await new Promise<void>((resolve) => {
-				get(item.url, {
-					// hack that shouldn't be needed :)
-					rejectUnauthorized: false,
-					headers: {
-						"Cookie": cookieString,
-						"User-Agent": userAgent
-					},
-				}, (res) => {
-					if (res.statusCode != 200) {
-						throw new Error("Got unexpected status code " + res.statusCode);
-					}
-
-					const stream = createWriteStream(fullPath);
-					stream.on("finish", () => {
-						stream.close();
-						resolve();
-					});
-					res.pipe(stream);
-				});
-			});
+			await download(browser, page, item.url, fullPath);
 
 			console.log("Download complete");
 
