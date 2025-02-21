@@ -6,17 +6,11 @@ import { Canvas } from "./loader/canvas";
 import { Gradescope } from "./loader/gradescope";
 import { Loader } from "./loader/loader";
 
+import { delay } from "./util";
+
 import { createWriteStream } from "fs";
 import { mkdir, readFile } from "fs/promises";
 import { basename, dirname } from "path/posix";
-
-function delay(time: number) {
-	return new Promise<void>((resolve, reject) => {
-		setTimeout(() => {
-			resolve();
-		}, time);
-	});
-}
 
 (async () => {
 	console.log("Hello");
