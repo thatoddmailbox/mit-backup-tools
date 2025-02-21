@@ -7,7 +7,7 @@ import { SaveRequest } from "../saveRequest";
 type CanvasMeta = {
 	pageType: "homepage";
 } | {
-	pageType: "course";
+	pageType: "courseHome";
 	courseDir: string;
 } | {
 	pageType: "assignment";
@@ -49,7 +49,7 @@ export class Canvas implements Loader {
 	}
 
 	async buildInitialList(page: Page): Promise<SaveRequest[]> {
-		await askQuestion("Please enable third-party cookies in Chrome, then press enter: ");
+		// await askQuestion("Please enable third-party cookies in Chrome, then press enter: ");
 		await page.reload();
 		await page.waitForNetworkIdle();
 
@@ -101,7 +101,7 @@ export class Canvas implements Loader {
 				console.log("courseName", courseName);
 
 				const newPageMeta: CanvasMeta = {
-					pageType: "course",
+					pageType: "courseHome",
 					courseDir: courseName + "/"
 				};
 
@@ -111,6 +111,9 @@ export class Canvas implements Loader {
 					format: "archive",
 					loaderMeta: newPageMeta
 				});
+
+				// TODO: remove me!!!
+				// break;
 			}
 
 			return list;
@@ -118,63 +121,110 @@ export class Canvas implements Loader {
 	}
 
 	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
-		return [];
-		// const meta = req.loaderMeta as CanvasMeta;
-		// if (meta.pageType == "homepage") {
-		// 	return [];
-		// }
+		const meta = req.loaderMeta as CanvasMeta;
+		if (meta.pageType == "homepage") {
+			return [];
+		}
 
-		// if (meta.pageType == "course") {
-		// 	console.log("Time to discover assignments");
+		if (meta.pageType == "courseHome") {
+			console.log("Time to discover course stuff");
 
-		// 	return await page.evaluate((meta: CanvasMeta) => {
-		// 		if (meta.pageType != "course") {
-		// 			throw new Error("This should never happen");
-		// 		}
+			return await page.evaluate((meta: CanvasMeta) => {
+				if (meta.pageType != "courseHome") {
+					throw new Error("This should never happen");
+				}
 
-		// 		const result: SaveRequest[] = [];
+				const result: SaveRequest[] = [];
 
-		// 		const table = document.querySelector("#assignments-student-table");
-		// 		if (!table) {
-		// 			throw new Error("Could not find assignment table");
-		// 		}
+				const navMenu = document.querySelector("nav[aria-label='Courses Navigation Menu']");
+				if (!navMenu) {
+					throw new Error("Could not find navMenu");
+				}
 
-		// 		const rows = table.querySelectorAll("tbody tr");
-		// 		console.log("rows", rows);
+				const navMenuLinks = navMenu.querySelectorAll("a");
+				console.log("navMenuLinks", navMenuLinks);
 
-		// 		for (let i = 0; i < rows.length; i++) {
-		// 			const row = rows[i];
-		// 			const rowLink = row.querySelector("a") as HTMLAnchorElement;
+				for (let i = 0; i < navMenuLinks.length; i++) {
+					const navMenuLink = navMenuLinks[i];
+					const disabledIcon = navMenuLink.querySelector("i.icon-off");
 
-		// 			if (!rowLink) {
-		// 				throw new Error("Could not find rowLink");
-		// 			}
+					console.log("navMenuLink", navMenuLink);
 
-		// 			console.log("row", row);
+					if (disabledIcon) {
+						// teacher view, it's disabled, skip
+						continue;
+					}
 
-		// 			console.log("rowLink.href", rowLink.href);
-		// 			console.log("rowLink.innerText", rowLink.innerText);
+					console.log("navMenuLink.href", navMenuLink.href);
+					console.log("navMenuLink.innerText", navMenuLink.innerText);
 
-		// 			const assignmentName = rowLink.innerText;
-		// 			const assignmentDir = meta.courseDir + "assignments/" + assignmentName + "/";
+					const pageName = navMenuLink.innerText;
 
-		// 			const newPageMeta: CanvasMeta = {
-		// 				pageType: "assignment",
-		// 				courseDir: meta.courseDir,
-		// 				assignmentDir: assignmentDir
-		// 			};
+					// we don't care about every page (there is only so much we can archive)
+					if (pageName == "Home") {
+						// already got this
+					} else if (pageName == "Announcements") {
+						// TODO: handle me
+					} else if (pageName == "Modules") {
+						// TODO: handle me
+					} else if (pageName == "Files") {
+						// TODO: handle me
+					} else if (pageName == "Assignments" || pageName == "Quizzes") {
+						// TODO: handle me
+						// quizzess in 6.S983
+					} else if (pageName == "Grades") {
+						// TODO: handle me
+					} else if (pageName == "Discussions") {
+						// TODO: handle me
+						// it's in 6.013
+					} else if (pageName == "Pages") {
+						// TODO: handle me
+						// it's in 21M.385
+					} else if (
+						pageName == "Gradescope" ||
+						pageName == "Panopto Video" ||
+						pageName == "Zoom" ||
+						pageName == "Dropbox for Canvas" ||
+						pageName == "Piazza" ||
+						pageName == "Study.Net Materials" ||
+						pageName == "Course Overview" ||
+						pageName == "Videos" ||
+						pageName == "Photobook" ||
+						pageName == "MITx Course Page" ||
+						pageName == "New Analytics" ||
+						pageName == "Settings" ||
+						pageName == "People" ||
+						pageName == "Subject Evaluation Reports" ||
+						pageName == "Course Evaluations" ||
+						pageName == "EvaluationKIT Auth" ||
+						pageName == "Syllabus" ||
+						pageName == "Class Dropbox Files"
+					) {
+						// skip these
+					} else {
+						throw new Error("idk what to do with '" + pageName + "'");
+					}
 
-		// 			result.push({
-		// 				url: rowLink.href,
-		// 				title: assignmentDir + "main",
-		// 				format: "archive",
-		// 				loaderMeta: newPageMeta
-		// 			});
-		// 		}
+					// const assignmentName = rowLink.innerText;
+					// const assignmentDir = meta.courseDir + "assignments/" + assignmentName + "/";
 
-		// 		return result;
-		// 	}, meta);
-		// }
+					// const newPageMeta: CanvasMeta = {
+					// 	pageType: "assignment",
+					// 	courseDir: meta.courseDir,
+					// 	assignmentDir: assignmentDir
+					// };
+
+					// result.push({
+					// 	url: rowLink.href,
+					// 	title: assignmentDir + "main",
+					// 	format: "archive",
+					// 	loaderMeta: newPageMeta
+					// });
+				}
+
+				return result;
+			}, meta);
+		}
 
 		// if (meta.pageType == "assignment") {
 		// 	return await page.evaluate((meta: CanvasMeta) => {
@@ -230,6 +280,6 @@ export class Canvas implements Loader {
 		// 	return [];
 		// }
 
-		// throw new Error("Did not recognize page type " + (meta as any).pageType);
+		throw new Error("Did not recognize page type " + (meta as any).pageType);
 	}
 }
