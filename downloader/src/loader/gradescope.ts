@@ -42,11 +42,13 @@ export class Gradescope implements Loader {
 				console.log("courseBox", (courseBox as any).href);
 
 				const courseURL = courseBox.href;
+				const courseURLParts = courseURL.split("/");
+				const courseID = courseURLParts[courseURLParts.length - 1];
 				const courseShortName = courseBox.querySelector("h3")!.innerText;
 
 				list.push({
 					url: courseURL,
-					title: courseShortName + "/Homepage",
+					title: courseShortName + "-" + courseID + "/Homepage",
 					format: "archive"
 				});
 				break;
