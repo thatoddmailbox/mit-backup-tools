@@ -3,4 +3,5 @@ export interface SaveRequest {
 	title: string;
 	format: "archive" | "download";
 	loaderMeta: any;
+	useDelayWait?: number;
 };

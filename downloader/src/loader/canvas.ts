@@ -382,7 +382,8 @@ export class Canvas implements Loader {
 							url: item.href,
 							title: newPageMeta.moduleDir + "main",
 							format: "archive",
-							loaderMeta: newPageMeta
+							loaderMeta: newPageMeta,
+							useDelayWait: 7*1000
 						});
 					} else {
 						const newPageMeta: CanvasMeta = {
@@ -398,6 +399,37 @@ export class Canvas implements Loader {
 					}
 
 				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseModuleFile") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseModuleFile") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const downloadLink = document.querySelector("a[download]");
+				if (!downloadLink) {
+					throw new Error("Could not find download link");
+				}
+
+				const downloadURL = (downloadLink as HTMLAnchorElement).href;
+				const downloadFilename = (downloadLink as HTMLAnchorElement).innerText.replace("Download ", "");
+
+				const newPageMeta: CanvasMeta = {
+					pageType: "genericArchive"
+				};
+
+				result.push({
+					url: downloadURL,
+					title: meta.moduleDir + downloadFilename,
+					format: "download",
+					loaderMeta: newPageMeta
+				});
 
 				return result;
 			}, meta);

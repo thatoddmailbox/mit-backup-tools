@@ -152,7 +152,11 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 		if (item.url != "") {
 			await page.goto(item.url);
 		}
-		await page.waitForNetworkIdle();
+		if (!item.useDelayWait) {
+			await page.waitForNetworkIdle();
+		} else {
+			await delay(item.useDelayWait);
+		}
 
 		console.log("fullPath", fullPath);
 		console.log("dirname(fullPath)", dirname(fullPath));
