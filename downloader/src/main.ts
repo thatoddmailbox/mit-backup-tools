@@ -32,7 +32,30 @@ function delay(time: number) {
 
 	// const cdpSession = await page.createCDPSession();
 
-	const loader: Loader = new Gradescope();
+	const loaders: Loader[] = [
+		new Gradescope()
+	];
+
+	if (process.argv.length <= 2) {
+		console.error("Please specify loader as a command line argument.");
+		process.exit(1);
+		return;
+	}
+
+	const targetSlug = process.argv[2];
+
+	let loader: Loader | undefined;
+	for (let i = 0; i < loaders.length; i++) {
+		if (loaders[i].getSlug() == targetSlug) {
+			loader = loaders[i];
+			break;
+		}
+	}
+	if (!loader) {
+		console.error("Could not find loader '" + targetSlug + "'.");
+		process.exit(1);
+		return;
+	}
 
 	const cookiesString = await readFile("./cookies-" + loader.getSlug() + ".json");
 	const cookies = JSON.parse(cookiesString.toString("utf-8"));

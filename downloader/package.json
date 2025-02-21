@@ -6,7 +6,8 @@
 	"type": "commonjs",
 	"main": "main.js",
 	"scripts": {
-		"start": "tsc && node build/main.js"
+		"start-canvas": "tsc && node build/main.js canvas",
+		"start-gradescope": "tsc && node build/main.js gradescope"
 	},
 	"dependencies": {
 		"puppeteer": "^24.2.1",
