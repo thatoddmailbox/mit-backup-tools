@@ -1,5 +1,10 @@
 import puppeteer from "puppeteer";
 
+import { Gradescope } from "./loader/gradescope";
+import { Loader } from "./loader/loader";
+
+import { readFile, writeFile } from "fs/promises";
+
 function delay(time: number) {
 	return new Promise<void>((resolve, reject) => {
 		setTimeout(() => {
@@ -7,13 +12,13 @@ function delay(time: number) {
 		}, time);
 	});
 }
-const fs = require('fs').promises;
 
 (async () => {
 	console.log("Hello");
 
 	const browser = await puppeteer.launch({
-		headless: false
+		headless: false,
+		devtools: true
 	});
 	const page = await browser.newPage();
 	await page.setViewport({
@@ -21,37 +26,49 @@ const fs = require('fs').promises;
 		height: 768
 	});
 
-	const cookiesString = await fs.readFile('./cookies-gradescope.json');
-	const cookies = JSON.parse(cookiesString);
+	// const cdpSession = await page.createCDPSession();
+
+	const loader: Loader = new Gradescope();
+
+	const cookiesString = await readFile('./cookies-gradescope.json');
+	const cookies = JSON.parse(cookiesString.toString("utf-8"));
 	await browser.setCookie(...cookies);
 
-	await page.goto("https://gradescope.com"); //"https://techinfo.toyota.com");
+	await page.goto(loader.getInitialURL());
 	await page.waitForNetworkIdle();
 
 	// const cookies = await browser.cookies();
 	// await fs.writeFile('./cookies-bla.json', JSON.stringify(cookies, null, 2));
 
-	const tisEmail = process.env.TIS_EMAIL;
-	const tisPassword = process.env.TIS_PASSWORD;
-
-	if (!tisEmail || !tisPassword) {
-		throw Error("missing TIS_EMAIL and TIS_PASSWORD");
+	const isLoggedIn = await loader.isLoggedIn(page);
+	if (!isLoggedIn) {
+		throw Error("Loader said you aren't logged in");
 	}
 
-	await page.type("input[name=username]", tisEmail);
-	await page.type("input[name=password]", tisPassword);
+	const queue = await loader.buildInitialList(page);
+	console.log("queue", queue);
 
-	const submitButton = await page.$("#externalloginsubmit");
-	if (!submitButton) {
-		throw Error("couldn't find submit button");
+	for (var i = 0; i < queue.length; i++) {
+		const item = queue[i];
+		await page.goto(item.url)
+		await page.waitForNetworkIdle();
+
+		await page.emulateMediaType("screen");
+		await page.pdf({
+			landscape: true,
+			path: "page.pdf"
+		});
+		// await cdpSession
 	}
-	await submitButton.click();
 
-	await page.waitForNavigation();
-	console.log("Logged in");
+	// await page.type("input[name=username]", tisEmail);
+	// await page.type("input[name=password]", tisPassword);
 
-	// const ewd = new EWD("EM07X0U", "Prius", "2008");
-	// await downloadHierarchicalDocument(page, ewd, "2008ewd");
+	// const submitButton = await page.$("#externalloginsubmit");
+	// if (!submitButton) {
+	// 	throw Error("couldn't find submit button");
+	// }
+	// await submitButton.click();
 
 	await delay(60 * 60 * 1000);
 	await browser.close();
