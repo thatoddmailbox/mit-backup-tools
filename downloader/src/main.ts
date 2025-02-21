@@ -3,7 +3,8 @@ import puppeteer from "puppeteer";
 import { Gradescope } from "./loader/gradescope";
 import { Loader } from "./loader/loader";
 
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import { basename, dirname } from "path/posix";
 
 function delay(time: number) {
 	return new Promise<void>((resolve, reject) => {
@@ -34,6 +35,9 @@ function delay(time: number) {
 	const cookies = JSON.parse(cookiesString.toString("utf-8"));
 	await browser.setCookie(...cookies);
 
+	const outputPath = "output/" + loader.getSlug() + "/";
+	await mkdir(outputPath, { recursive: true });
+
 	await page.goto(loader.getInitialURL());
 	await page.waitForNetworkIdle();
 
@@ -50,13 +54,22 @@ function delay(time: number) {
 
 	for (var i = 0; i < queue.length; i++) {
 		const item = queue[i];
-		await page.goto(item.url)
+		if (item.url != "") {
+			await page.goto(item.url);
+		}
 		await page.waitForNetworkIdle();
+
+		const fullPath = outputPath + item.title;
+		console.log("fullPath", fullPath);
+		console.log("dirname(fullPath)", dirname(fullPath));
+		console.log("basename(fullPath)", basename(fullPath));
+
+		await mkdir(dirname(fullPath), { recursive: true });
 
 		await page.emulateMediaType("screen");
 		await page.pdf({
 			landscape: true,
-			path: "page.pdf"
+			path: fullPath + ".pdf"
 		});
 		// await cdpSession
 	}

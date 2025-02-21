@@ -1,4 +1,5 @@
 export interface SaveRequest {
 	url: string;
-	format: "download";
+	title: string;
+	format: "archive" | "download";
 };
