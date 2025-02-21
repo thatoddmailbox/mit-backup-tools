@@ -23,6 +23,9 @@ type CanvasMeta = {
 	pageType: "courseModuleFile";
 	moduleDir: string;
 } | {
+	pageType: "courseFiles";
+	filesDir: string;
+} | {
 	pageType: "assignment";
 	courseDir: string;
 	assignmentDir: string;
@@ -191,7 +194,6 @@ export class Canvas implements Loader {
 						// 	loaderMeta: newPageMeta
 						// });
 					} else if (pageName == "Modules") {
-						// TODO: handle me
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseModules",
 							courseDir: meta.courseDir,
@@ -206,6 +208,17 @@ export class Canvas implements Loader {
 						});
 					} else if (pageName == "Files") {
 						// TODO: handle me
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseFiles",
+							filesDir: meta.courseDir + "files/"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: newPageMeta.filesDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (pageName == "Assignments" || pageName == "Quizzes") {
 						// TODO: handle me
 						// quizzess in 6.S983
@@ -390,12 +403,12 @@ export class Canvas implements Loader {
 							pageType: "genericArchive"
 						};
 
-						// result.push({
-						// 	url: item.href,
-						// 	title: meta.modulesDir + "module-" + moduleID,
-						// 	format: "archive",
-						// 	loaderMeta: newPageMeta
-						// });
+						result.push({
+							url: item.href,
+							title: meta.modulesDir + "module-" + moduleID,
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					}
 
 				}
@@ -430,6 +443,54 @@ export class Canvas implements Loader {
 					format: "download",
 					loaderMeta: newPageMeta
 				});
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseFiles") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseFiles") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const fileItems = document.querySelectorAll(".ef-item-row a.ef-name-col__link");
+				for (let i = 0; i < fileItems.length; i++) {
+					const fileItem = fileItems[i] as HTMLAnchorElement;
+
+					const fileName = fileItem.innerText;
+					const fileURL = fileItem.href;
+					const fileIsFolder = fileURL.includes("/folder/");
+
+					console.log(fileName, fileURL, fileIsFolder);
+
+					if (fileIsFolder) {
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseFiles",
+							filesDir: meta.filesDir + fileName + "/"
+						};
+
+						result.push({
+							url: fileURL,
+							title: newPageMeta.filesDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
+					} else {
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						result.push({
+							url: fileURL,
+							title: meta.filesDir + fileName,
+							format: "download",
+							loaderMeta: newPageMeta
+						});
+					}
+				}
 
 				return result;
 			}, meta);
