@@ -2,6 +2,7 @@ import puppeteer from "puppeteer";
 
 import { get } from "https";
 
+import { Canvas } from "./loader/canvas";
 import { Gradescope } from "./loader/gradescope";
 import { Loader } from "./loader/loader";
 
@@ -33,6 +34,7 @@ function delay(time: number) {
 	// const cdpSession = await page.createCDPSession();
 
 	const loaders: Loader[] = [
+		new Canvas(),
 		new Gradescope()
 	];
 
