@@ -52,7 +52,7 @@ function delay(time: number) {
 	const queue = await loader.buildInitialList(page);
 	console.log("queue", queue);
 
-	for (var i = 0; i < queue.length; i++) {
+	for (let i = 0; i < queue.length; i++) {
 		const item = queue[i];
 		if (item.url != "") {
 			await page.goto(item.url);
@@ -71,8 +71,17 @@ function delay(time: number) {
 			landscape: true,
 			path: fullPath + ".pdf"
 		});
+
 		// await cdpSession
+
+		const newRequests = await loader.discoverMoreRequests(page, item);
+		for (let j = 0 ; j < newRequests.length; j++) {
+			const newRequest = newRequests[j];
+			queue.push(newRequest);
+		}
 	}
+
+	console.log("Done");
 
 	// await page.type("input[name=username]", tisEmail);
 	// await page.type("input[name=password]", tisPassword);

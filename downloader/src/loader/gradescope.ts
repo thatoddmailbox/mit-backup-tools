@@ -3,6 +3,19 @@ import { Page } from "puppeteer";
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
 
+type GradescopeMeta = {
+	pageType: "homepage";
+} | {
+	pageType: "course";
+	courseDir: string;
+} | {
+	pageType: "assignment";
+	courseDir: string;
+	assignmentDir: string;
+} | {
+	pageType: "assignmentDownload"
+};
+
 export class Gradescope implements Loader {
 	getSlug(): string {
 		return "gradescope";
@@ -30,10 +43,14 @@ export class Gradescope implements Loader {
 			const list: SaveRequest[] = [];
 
 			// homepage itself
+			const homepageMeta: GradescopeMeta = {
+				pageType: "homepage"
+			};
 			list.push({
 				url: "",
 				title: "Homepage",
-				format: "archive"
+				format: "archive",
+				loaderMeta: homepageMeta
 			});
 
 			for (let i = 0; i < courseBoxes.length; i++) {
@@ -46,25 +63,127 @@ export class Gradescope implements Loader {
 				const courseID = courseURLParts[courseURLParts.length - 1];
 				const courseShortName = courseBox.querySelector("h3")!.innerText;
 
+				const courseDir = courseShortName + "-" + courseID + "/";
+
+				const pageMeta: GradescopeMeta = {
+					pageType: "course",
+					courseDir: courseDir
+				};
+
 				list.push({
 					url: courseURL,
-					title: courseShortName + "-" + courseID + "/Homepage",
-					format: "archive"
+					title: courseDir + "Homepage",
+					format: "archive",
+					loaderMeta: pageMeta
 				});
-				break;
+
+				// TODO: remove me!!!
+				// if (i == 1) {
+					break;
+				// }
 			}
 
 			return list;
 		});
-		// const courseBoxes = await page.$$(".courseBox");
-		// console.log("courseBoxes", courseBoxes);
+	}
 
-		// for (let i = 0; i < courseBoxes.length; i++) {
-		// 	const courseBox = courseBoxes[i];
-		// 	console.log("courseBox", courseBox);
-		// 	console.log("courseBox", courseBox);
-		// }
+	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
+		const meta = req.loaderMeta as GradescopeMeta;
+		if (meta.pageType == "homepage") {
+			return [];
+		}
 
-		return [];
+		if (meta.pageType == "course") {
+			console.log("Time to discover assignments");
+
+			return await page.evaluate((meta: GradescopeMeta) => {
+				if (meta.pageType != "course") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const table = document.querySelector("#assignments-student-table");
+				if (!table) {
+					throw new Error("Could not find assignment table");
+				}
+
+				const rows = table.querySelectorAll("tbody tr");
+				console.log("rows", rows);
+
+				for (let i = 0; i < rows.length; i++) {
+					const row = rows[i];
+					const rowLink = row.querySelector("a") as HTMLAnchorElement;
+
+					if (!rowLink) {
+						throw new Error("Could not find rowLink");
+					}
+
+					console.log("row", row);
+
+					console.log("rowLink.href", rowLink.href);
+					console.log("rowLink.innerText", rowLink.innerText);
+
+					const assignmentName = rowLink.innerText;
+					const assignmentDir = meta.courseDir + "assignments/" + assignmentName + "/";
+
+					const newPageMeta: GradescopeMeta = {
+						pageType: "assignment",
+						courseDir: meta.courseDir,
+						assignmentDir: assignmentDir
+					};
+
+					result.push({
+						url: rowLink.href,
+						title: assignmentDir + "main",
+						format: "archive",
+						loaderMeta: newPageMeta
+					});
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "assignment") {
+			return await page.evaluate((meta: GradescopeMeta) => {
+				if (meta.pageType != "assignment") {
+					throw new Error("This should never happen");
+				}
+
+				const assignmentViewerDiv = document.querySelector("div[data-react-class=AssignmentSubmissionViewer]");
+				if (!assignmentViewerDiv) {
+					throw new Error("Could not find assignment viewer div");
+				}
+
+				const reactPropsStr = assignmentViewerDiv.attributes.getNamedItem("data-react-props");
+				if (!reactPropsStr) {
+					throw new Error("Could not find react props");
+				}
+
+				const reactProps = JSON.parse(reactPropsStr.value);
+
+				console.log("reactProps", reactProps);
+				console.log("reactProps.paths.original_file_path", reactProps.paths.original_file_path);
+				const newPageMeta: GradescopeMeta = {
+					pageType: "assignmentDownload"
+				};
+
+				const req: SaveRequest = {
+					url: reactProps.paths.original_file_path,
+					title: meta.assignmentDir + "file.pdf",
+					format: "download",
+					loaderMeta: newPageMeta
+				};
+
+				return [req];
+			}, meta);
+		}
+
+		if (meta.pageType == "assignmentDownload") {
+			return [];
+		}
+
+		throw new Error("Did not recognize page type " + (meta as any).pageType);
 	}
 }
