@@ -68,15 +68,35 @@ function delay(time: number) {
 			// const cookies = await page.evaluate(() => document.cookie);
 			const userAgent = await page.evaluate(() => navigator.userAgent);
 
+			const domain = item.url.split("/")[2];
+			console.log("Domain is", domain);
+
+			const cookies = await browser.cookies();
+			let cookieString = "";
+			for (let i = 0; i < cookies.length; i++){
+				const cookie = cookies[i];
+				if (cookie.domain != domain) {
+					break;
+				}
+
+				cookieString += cookie.name + "=" + cookie.value + ";";
+			}
+
+			console.log("Cookies are", cookieString);
+
 			await new Promise<void>((resolve) => {
 				get(item.url, {
 					// hack that shouldn't be needed :)
 					rejectUnauthorized: false,
 					headers: {
-						// "Cookie": cookies,
+						"Cookie": cookieString,
 						"User-Agent": userAgent
 					},
 				}, (res) => {
+					if (res.statusCode != 200) {
+						throw new Error("Got unexpected status code " + res.statusCode);
+					}
+
 					const stream = createWriteStream(fullPath);
 					stream.on("finish", () => {
 						stream.close();
