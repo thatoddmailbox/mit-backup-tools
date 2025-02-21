@@ -4,6 +4,10 @@ import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
 
 export class Gradescope implements Loader {
+	getSlug(): string {
+		return "gradescope";
+	}
+
 	getInitialURL(): string {
 		// https://www.gradescope.com/auth/saml/mit
 		return "https://gradescope.com";

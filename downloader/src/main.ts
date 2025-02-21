@@ -30,7 +30,7 @@ function delay(time: number) {
 
 	const loader: Loader = new Gradescope();
 
-	const cookiesString = await readFile('./cookies-gradescope.json');
+	const cookiesString = await readFile("./cookies-" + loader.getSlug() + ".json");
 	const cookies = JSON.parse(cookiesString.toString("utf-8"));
 	await browser.setCookie(...cookies);
 
