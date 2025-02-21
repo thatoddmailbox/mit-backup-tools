@@ -7,8 +7,14 @@ import { SaveRequest } from "../saveRequest";
 type CanvasMeta = {
 	pageType: "homepage";
 } | {
+	pageType: "genericArchive";
+}  | {
 	pageType: "courseHome";
 	courseDir: string;
+} | {
+	pageType: "courseAnnouncements";
+	courseDir: string;
+	announcementsDir: string;
 } | {
 	pageType: "assignment";
 	courseDir: string;
@@ -113,7 +119,7 @@ export class Canvas implements Loader {
 				});
 
 				// TODO: remove me!!!
-				// break;
+				break;
 			}
 
 			return list;
@@ -165,6 +171,19 @@ export class Canvas implements Loader {
 						// already got this
 					} else if (pageName == "Announcements") {
 						// TODO: handle me
+
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseAnnouncements",
+							courseDir: meta.courseDir,
+							announcementsDir: meta.courseDir + "announcements/"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: newPageMeta.announcementsDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (pageName == "Modules") {
 						// TODO: handle me
 					} else if (pageName == "Files") {
@@ -220,6 +239,82 @@ export class Canvas implements Loader {
 					// 	format: "archive",
 					// 	loaderMeta: newPageMeta
 					// });
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "genericArchive") {
+			return [];
+		}
+
+		if (meta.pageType == "courseAnnouncements") {
+			return await page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseAnnouncements") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const content = document.querySelector("#content");
+				if (!content) {
+					throw new Error("Could not find content");
+				}
+
+				// TODO: pagination
+				const pagination = content.querySelector("div[role=navigation]");
+				let pages: (HTMLButtonElement | null)[] = [null];
+				if (pagination) {
+					console.log("We have a pagination control");
+					pages = [];
+					pagination.querySelectorAll("button").forEach((button) => {
+						pages.push(button);
+					});
+				}
+
+				for (var i = 0; i < pages.length; i++) {
+					console.log("Page", i);
+
+					const page = pages[i];
+					if (page) {
+						page.click();
+
+						await new Promise<void>((resolve, reject) => {
+							setTimeout(() => {
+								resolve();
+							}, 5*1000);
+						});
+					}
+
+					// process links
+					const links = content.querySelectorAll("a.ic-item-row__content-link");
+					for (let i = 0; i < links.length; i++) {
+						const link = links[i] as HTMLAnchorElement;
+
+						console.log("href", link.href);
+
+						const linkParts = link.href.split("/");
+						const announcementID = linkParts[linkParts.length - 1];
+						console.log("announcementID", announcementID);
+
+						// Formatted like "Dec 18, 2021, 5:30 PM"
+						const dateString = (link.parentElement!.parentElement!.querySelector(".ic-item-row__meta-content-timestamp") as HTMLSpanElement).innerText
+						const date = new Date(dateString);
+
+						const formattedDate = date.toISOString().split("T")[0];
+
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						result.push({
+							url: link.href,
+							title: meta.announcementsDir + "announcement-" + formattedDate + "-" + announcementID,
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
+					}
 				}
 
 				return result;
