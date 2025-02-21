@@ -16,6 +16,13 @@ type CanvasMeta = {
 	courseDir: string;
 	announcementsDir: string;
 } | {
+	pageType: "courseModules";
+	courseDir: string;
+	modulesDir: string;
+} | {
+	pageType: "courseModuleFile";
+	moduleDir: string;
+} | {
 	pageType: "assignment";
 	courseDir: string;
 	assignmentDir: string;
@@ -170,22 +177,33 @@ export class Canvas implements Loader {
 					if (pageName == "Home") {
 						// already got this
 					} else if (pageName == "Announcements") {
-						// TODO: handle me
-
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseAnnouncements",
 							courseDir: meta.courseDir,
 							announcementsDir: meta.courseDir + "announcements/"
 						};
 
+						// TODO: undo me!
+						// result.push({
+						// 	url: navMenuLink.href,
+						// 	title: newPageMeta.announcementsDir + "main",
+						// 	format: "archive",
+						// 	loaderMeta: newPageMeta
+						// });
+					} else if (pageName == "Modules") {
+						// TODO: handle me
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseModules",
+							courseDir: meta.courseDir,
+							modulesDir: meta.courseDir + "modules/"
+						};
+
 						result.push({
 							url: navMenuLink.href,
-							title: newPageMeta.announcementsDir + "main",
+							title: newPageMeta.modulesDir + "main",
 							format: "archive",
 							loaderMeta: newPageMeta
 						});
-					} else if (pageName == "Modules") {
-						// TODO: handle me
 					} else if (pageName == "Files") {
 						// TODO: handle me
 					} else if (pageName == "Assignments" || pageName == "Quizzes") {
@@ -315,6 +333,70 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta
 						});
 					}
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseModules") {
+			return await page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseModules") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const items = document.querySelectorAll(".context_module_item a.title");
+
+				for (let i = 0; i < items.length; i++) {
+					const item = items[i] as HTMLAnchorElement;
+					console.log("item", item);
+					console.log("item.href", item.href);
+
+					if (item.href.includes("{{ id }}")) {
+						console.log("weird template thing, ignore");
+						continue;
+					}
+
+					const itemLinkParts = item.href.split("/");
+					const moduleID = itemLinkParts[itemLinkParts.length - 1];
+
+					// possible class names include
+					// attachment
+					// discussion_topic
+					// assignment
+					// quiz
+					// lti-quiz
+					// external_url
+
+					// only one we handle specially is attachment
+					const isAttachment = item.parentElement!.parentElement!.parentElement!.parentElement!.parentElement!.classList.contains("attachment")
+					if (isAttachment) {
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseModuleFile",
+							moduleDir: meta.modulesDir + "module-" + moduleID + "/"
+						};
+
+						result.push({
+							url: item.href,
+							title: newPageMeta.moduleDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
+					} else {
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						// result.push({
+						// 	url: item.href,
+						// 	title: meta.modulesDir + "module-" + moduleID,
+						// 	format: "archive",
+						// 	loaderMeta: newPageMeta
+						// });
+					}
+
 				}
 
 				return result;
