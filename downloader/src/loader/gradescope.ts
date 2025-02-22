@@ -76,11 +76,6 @@ export class Gradescope implements Loader {
 					format: "archive",
 					loaderMeta: pageMeta
 				});
-
-				// TODO: remove me!!!
-				if (i == 1) {
-					break;
-				}
 			}
 
 			return list;
