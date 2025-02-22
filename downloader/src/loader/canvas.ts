@@ -261,7 +261,6 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta
 						});
 					} else if (pageName == "Assignments" || pageName == "Quizzes") {
-						// TODO: handle me
 						// quizzess in 6.S983
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseAssignments",
@@ -275,7 +274,6 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta
 						});
 					} else if (pageName == "Grades") {
-						// TODO: handle me
 						const newPageMeta: CanvasMeta = {
 							pageType: "genericArchive"
 						};
@@ -298,7 +296,6 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta2
 						});
 					} else if (pageName == "Discussions") {
-						// TODO: handle me
 						// it's in 6.013
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseDiscussions",
@@ -312,7 +309,6 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta
 						});
 					} else if (pageName == "Pages") {
-						// TODO: handle me
 						// it's in 21M.385 only
 						const newPageMeta: CanvasMeta = {
 							pageType: "coursePages",
@@ -345,7 +341,17 @@ export class Canvas implements Loader {
 						pageName == "Syllabus" ||
 						pageName == "Class Dropbox Files"
 					) {
-						// skip these
+						// treat these as generic
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: meta.courseDir + pageName,
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else {
 						throw new Error("idk what to do with '" + pageName + "'");
 					}
@@ -462,8 +468,12 @@ export class Canvas implements Loader {
 					console.log("item", item);
 					console.log("item.href", item.href);
 
-					if (item.href.includes("{{ id }}")) {
+					if (decodeURI(item.href).includes("{{ id }}")) {
 						console.log("weird template thing, ignore");
+						continue;
+					}
+					if (!item.href.includes("canvas.mit.edu")) {
+						console.log("External link, ignore");
 						continue;
 					}
 
