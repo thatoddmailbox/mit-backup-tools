@@ -10,7 +10,7 @@ import { getBaseOutputPath, increaseEvilCount } from "../main";
 type CanvasMeta = {
 	pageType: "homepage";
 } | {
-	pageType: "genericArchive" | "courseGradesDetails";
+	pageType: "genericArchive" | "courseGradesDetails" | "courseDiscussion";
 } | {
 	pageType: "courseHome";
 	courseDir: string;
@@ -40,6 +40,9 @@ type CanvasMeta = {
 } | {
 	pageType: "coursePages";
 	pagesDir: string;
+} | {
+	pageType: "courseDiscussions",
+	discussionsDir: string;
 };
 
 // https://stackoverflow.com/a/50890409
@@ -126,7 +129,7 @@ export class Canvas implements Loader {
 				console.log("courseName", courseName);
 
 				// TODO: remove me!!!
-				if (!courseName.includes("Interactive")) {
+				if (!courseName.includes("6.013")) {
 					continue;
 				}
 
@@ -152,21 +155,32 @@ export class Canvas implements Loader {
 
 	async preCapture(page: Page, req: SaveRequest) {
 		const meta = req.loaderMeta as CanvasMeta;
-		if (meta.pageType != "courseGradesDetails") {
-			return;
+
+		if (meta.pageType == "courseGradesDetails") {
+			const detailsButton = await page.$("#show_all_details_button");
+			if (!detailsButton) {
+				return;
+			}
+
+			await detailsButton.click();
 		}
 
-		const detailsButton = await page.$("#show_all_details_button");
-		if (!detailsButton) {
-			throw new Error("Could not find details button");
-		}
+		if (meta.pageType == "courseDiscussion") {
+			const expandButtons = await page.$$(".discussion-expand-btn button");
+			for (let i = 0; i < expandButtons.length; i++) {
+				const expandButton = expandButtons[i];
+				await expandButton.click();
+			}
 
-		await detailsButton.click();
+			if (expandButtons.length > 0) {
+				await delay(5 * 1000);
+			}
+		}
 	}
 
 	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
 		const meta = req.loaderMeta as CanvasMeta;
-		if (meta.pageType == "homepage" || meta.pageType == "courseGradesDetails") {
+		if (meta.pageType == "homepage" || meta.pageType == "courseGradesDetails" || meta.pageType == "courseDiscussion") {
 			return [];
 		}
 
@@ -286,6 +300,17 @@ export class Canvas implements Loader {
 					} else if (pageName == "Discussions") {
 						// TODO: handle me
 						// it's in 6.013
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseDiscussions",
+							discussionsDir: meta.courseDir + "discussions/"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: newPageMeta.discussionsDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (pageName == "Pages") {
 						// TODO: handle me
 						// it's in 21M.385 only
@@ -670,7 +695,7 @@ export class Canvas implements Loader {
 					await new Promise<void>((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 15*1000);
+						}, 12*1000);
 					});
 
 					return true;
@@ -712,7 +737,7 @@ export class Canvas implements Loader {
 
 			await downloadButton.click();
 
-			await delay(3 * 1000);
+			await delay(20 * 1000);
 
 			return [];
 		}
@@ -742,6 +767,39 @@ export class Canvas implements Loader {
 						title: meta.pagesDir + pageLinkName.replace(/\//g, "_"),
 						format: "archive",
 						loaderMeta: newPageMeta
+					});
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseDiscussions") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseDiscussions") {
+					throw new Error("This should never happen");
+				}
+
+				const discussionLinks = document.querySelectorAll(".ic-discussion-content-container a");
+
+				const result: SaveRequest[] = [];
+
+				for (let i = 0; i < discussionLinks.length; i++) {
+					const discussionLink = discussionLinks[i] as HTMLAnchorElement;
+
+					const discussionLinkName = discussionLink.querySelector("span")!.innerText;
+					const discussionLinkURL = discussionLink.href;
+
+					const newPageMeta: CanvasMeta = {
+						pageType: "courseDiscussion"
+					};
+
+					result.push({
+						url: discussionLinkURL,
+						title: meta.discussionsDir + discussionLinkName.replace(/\//g, "_"),
+						format: "archive",
+						loaderMeta: newPageMeta,
+						useDelayWait: 3 * 1000
 					});
 				}
 
