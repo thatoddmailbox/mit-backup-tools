@@ -87,6 +87,10 @@ export class Gradescope implements Loader {
 		});
 	}
 
+	async preCapture(page: Page, req: SaveRequest) {
+		// nothing to do
+	}
+
 	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
 		const meta = req.loaderMeta as GradescopeMeta;
 		if (meta.pageType == "homepage") {

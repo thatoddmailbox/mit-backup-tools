@@ -10,7 +10,7 @@ import { getBaseOutputPath, increaseEvilCount } from "../main";
 type CanvasMeta = {
 	pageType: "homepage";
 } | {
-	pageType: "genericArchive";
+	pageType: "genericArchive" | "courseGradesDetails";
 }  | {
 	pageType: "courseHome";
 	courseDir: string;
@@ -147,9 +147,23 @@ export class Canvas implements Loader {
 		});
 	}
 
+	async preCapture(page: Page, req: SaveRequest) {
+		const meta = req.loaderMeta as CanvasMeta;
+		if (meta.pageType != "courseGradesDetails") {
+			return;
+		}
+
+		const detailsButton = await page.$("#show_all_details_button");
+		if (!detailsButton) {
+			throw new Error("Could not find details button");
+		}
+
+		await detailsButton.click();
+	}
+
 	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
 		const meta = req.loaderMeta as CanvasMeta;
-		if (meta.pageType == "homepage") {
+		if (meta.pageType == "homepage" || meta.pageType == "courseGradesDetails") {
 			return [];
 		}
 
@@ -245,6 +259,27 @@ export class Canvas implements Loader {
 						});
 					} else if (pageName == "Grades") {
 						// TODO: handle me
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: meta.courseDir + "grades",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
+
+						const newPageMeta2: CanvasMeta = {
+							pageType: "courseGradesDetails"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: meta.courseDir + "grades-details",
+							format: "archive",
+							loaderMeta: newPageMeta2
+						});
 					} else if (pageName == "Discussions") {
 						// TODO: handle me
 						// it's in 6.013

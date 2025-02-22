@@ -170,6 +170,8 @@ export function increaseEvilCount() {
 			await delay(item.useDelayWait);
 		}
 
+		loader.preCapture(page, item);
+
 		console.log("fullPath", fullPath);
 		console.log("dirname(fullPath)", dirname(fullPath));
 		console.log("basename(fullPath)", basename(fullPath));
@@ -181,8 +183,6 @@ export function increaseEvilCount() {
 			landscape: true,
 			path: fullPath + ".pdf"
 		});
-
-		// await cdpSession
 
 		const newRequests = await loader.discoverMoreRequests(page, item);
 		for (let j = 0; j < newRequests.length; j++) {

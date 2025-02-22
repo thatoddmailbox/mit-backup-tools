@@ -9,5 +9,6 @@ export interface Loader {
 	isLoggedIn(page: Page): Promise<boolean>;
 
 	buildInitialList(page: Page): Promise<SaveRequest[]>;
+	preCapture(page: Page, req: SaveRequest): Promise<void>;
 	discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]>;
 };
