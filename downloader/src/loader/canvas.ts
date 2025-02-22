@@ -443,10 +443,15 @@ export class Canvas implements Loader {
 						}
 
 						// Formatted like "Dec 18, 2021, 5:30 PM"
-						const dateString = (link.parentElement!.parentElement!.querySelector(".ic-item-row__meta-content-timestamp") as HTMLSpanElement).innerText
-						const date = new Date(dateString);
+						const dateString = (link.parentElement!.parentElement!.querySelector(".ic-item-row__meta-content-timestamp") as HTMLSpanElement).innerText;
+						console.log("dateString", dateString);
+						let formattedDate = "";
 
-						const formattedDate = date.toISOString().split("T")[0];
+						if (dateString) {
+							const date = new Date(dateString);
+
+							formattedDate = date.toISOString().split("T")[0];
+						}
 
 						const newPageMeta: CanvasMeta = {
 							pageType: "genericArchive"
