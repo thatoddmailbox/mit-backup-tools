@@ -11,6 +11,7 @@ import { delay } from "./util";
 import { createWriteStream } from "fs";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { basename, dirname } from "path/posix";
+import { WebSIS } from "./loader/websis";
 
 async function download(browser: Browser, page: Page, url: string, fullPath: string) {
 	const userAgent = await page.evaluate(() => navigator.userAgent);
@@ -97,7 +98,8 @@ export function increaseEvilCount() {
 
 	const loaders: Loader[] = [
 		new Canvas(),
-		new Gradescope()
+		new Gradescope(),
+		new WebSIS()
 	];
 
 	if (process.argv.length <= 2) {
