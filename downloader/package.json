@@ -7,6 +7,7 @@
 	"main": "main.js",
 	"scripts": {
 		"start-canvas": "tsc && node build/main.js canvas",
+		"start-eecsis": "tsc && node build/main.js eecsis",
 		"start-gradescope": "tsc && node build/main.js gradescope",
 		"start-websis": "tsc && node build/main.js websis"
 	},
