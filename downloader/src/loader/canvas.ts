@@ -266,7 +266,7 @@ export class Canvas implements Loader {
 
 						result.push({
 							url: navMenuLink.href,
-							title: newPageMeta.assignmentsDir + "main",
+							title: newPageMeta.assignmentsDir + (pageName == "Quizzes" ? "quizzes" : "main"),
 							format: "archive",
 							loaderMeta: newPageMeta
 						});
