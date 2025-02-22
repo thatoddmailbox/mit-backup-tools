@@ -71,6 +71,15 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 	});
 }
 
+let outputPath = "";
+export function getBaseOutputPath(): string {
+	return outputPath;
+};
+let evilCount = 0;
+export function increaseEvilCount() {
+	evilCount = evilCount + 1;
+};
+
 (async () => {
 	console.log("Hello");
 
@@ -116,7 +125,7 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 	const cookies = JSON.parse(cookiesString.toString("utf-8"));
 	await browser.setCookie(...cookies);
 
-	const outputPath = "output/" + loader.getSlug() + "/";
+	outputPath = "output/" + loader.getSlug() + "/";
 	await mkdir(outputPath, { recursive: true });
 
 	await page.goto(loader.getInitialURL());
@@ -153,7 +162,10 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 			await page.goto(item.url);
 		}
 		if (!item.useDelayWait) {
-			await page.waitForNetworkIdle();
+			console.log("evilCount", evilCount);
+			await page.waitForNetworkIdle({
+				concurrency: evilCount
+			});
 		} else {
 			await delay(item.useDelayWait);
 		}

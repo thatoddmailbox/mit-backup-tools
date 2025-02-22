@@ -1,9 +1,11 @@
 import { Page } from "puppeteer";
 import { createInterface } from "readline";
+import { resolve } from "path";
 
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
 import { delay } from "../util";
+import { getBaseOutputPath, increaseEvilCount } from "../main";
 
 type CanvasMeta = {
 	pageType: "homepage";
@@ -647,10 +649,21 @@ export class Canvas implements Loader {
 				throw new Error("Could not find download button");
 			}
 
-			// TODO: intercept download
-			// await downloadButton.click();
+			increaseEvilCount();
 
-			// await delay(60*1000);
+			const absoluteDownloadPath = resolve(getBaseOutputPath(), meta.assignmentDir);
+			const session = await page.createCDPSession();
+			await session.send("Browser.setDownloadBehavior", {
+				behavior: "allow",
+				downloadPath: absoluteDownloadPath,
+			});
+			await session.detach();
+			console.log("meta.assignmentDir", meta.assignmentDir);
+			console.log("absoluteDownloadPath", absoluteDownloadPath);
+
+			await downloadButton.click();
+
+			await delay(3 * 1000);
 
 			return [];
 		}
