@@ -635,7 +635,19 @@ export class Canvas implements Loader {
 		}
 
 		if (meta.pageType == "courseAssignments") {
-			return page.evaluate(async (meta: CanvasMeta) => {
+			const existingAssignmentIDs = [];
+			const assignmentFiles = await readdir(resolve(getBaseOutputPath(), meta.assignmentsDir));
+			console.log("assignmentFiles", assignmentFiles);
+			for (let i = 0; i < assignmentFiles.length; i++) {
+				const assignmentFile = assignmentFiles[i];
+				if (assignmentFile.startsWith("assignment-")) {
+					const assignmentID = assignmentFile.replace("/", "").split(".")[0].split("-")[1];
+					existingAssignmentIDs.push(assignmentID);
+				}
+			}
+			console.log("existingAssignmentIDs", existingAssignmentIDs);
+
+			return page.evaluate(async (meta: CanvasMeta, existingAssignmentIDs: string[]) => {
 				if (meta.pageType != "courseAssignments") {
 					throw new Error("This should never happen");
 				}
@@ -651,6 +663,10 @@ export class Canvas implements Loader {
 
 					const assignmentURLParts = assignmentURL.split("/");
 					const assignmentID = assignmentURLParts[assignmentURLParts.length - 1];
+
+					if (existingAssignmentIDs.indexOf(assignmentID) > -1) {
+						continue;
+					}
 
 					console.log(assignmentName, assignmentURL);
 
@@ -668,7 +684,7 @@ export class Canvas implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, existingAssignmentIDs);
 		}
 
 		if (meta.pageType == "courseAssignment") {
