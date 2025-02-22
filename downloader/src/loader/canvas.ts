@@ -11,7 +11,7 @@ type CanvasMeta = {
 	pageType: "homepage";
 } | {
 	pageType: "genericArchive" | "courseGradesDetails";
-}  | {
+} | {
 	pageType: "courseHome";
 	courseDir: string;
 } | {
@@ -37,6 +37,9 @@ type CanvasMeta = {
 } | {
 	pageType: "courseAssignmentSubmission";
 	assignmentDir: string;
+} | {
+	pageType: "coursePages";
+	pagesDir: string;
 };
 
 // https://stackoverflow.com/a/50890409
@@ -123,7 +126,7 @@ export class Canvas implements Loader {
 				console.log("courseName", courseName);
 
 				// TODO: remove me!!!
-				if (!courseName.includes("24.900")) {
+				if (!courseName.includes("Interactive")) {
 					continue;
 				}
 
@@ -285,7 +288,18 @@ export class Canvas implements Loader {
 						// it's in 6.013
 					} else if (pageName == "Pages") {
 						// TODO: handle me
-						// it's in 21M.385
+						// it's in 21M.385 only
+						const newPageMeta: CanvasMeta = {
+							pageType: "coursePages",
+							pagesDir: meta.courseDir + "pages/"
+						};
+
+						result.push({
+							url: navMenuLink.href.replace("/wiki", "/pages"),
+							title: newPageMeta.pagesDir + "list",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (
 						pageName == "Gradescope" ||
 						pageName == "Panopto Video" ||
@@ -701,6 +715,38 @@ export class Canvas implements Loader {
 			await delay(3 * 1000);
 
 			return [];
+		}
+
+		if (meta.pageType == "coursePages") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "coursePages") {
+					throw new Error("This should never happen");
+				}
+
+				const pageLinks = document.querySelectorAll(".wiki-page-title a");
+
+				const result: SaveRequest[] = [];
+
+				for (let i = 0; i < pageLinks.length; i++) {
+					const pageLink = pageLinks[i] as HTMLAnchorElement;
+
+					const pageLinkName = pageLink.innerText;
+					const pageLinkURL = pageLink.href;
+
+					const newPageMeta: CanvasMeta = {
+						pageType: "genericArchive"
+					};
+
+					result.push({
+						url: pageLinkURL,
+						title: meta.pagesDir + pageLinkName.replace(/\//g, "_"),
+						format: "archive",
+						loaderMeta: newPageMeta
+					});
+				}
+
+				return result;
+			}, meta);
 		}
 
 		throw new Error("Did not recognize page type " + (meta as any).pageType);
