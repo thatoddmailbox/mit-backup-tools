@@ -77,7 +77,7 @@ export class Canvas implements Loader {
 	}
 
 	async buildInitialList(page: Page): Promise<SaveRequest[]> {
-		// await askQuestion("Please enable third-party cookies in Chrome, then press enter: ");
+		await askQuestion("Please enable third-party cookies in Chrome, then press enter: ");
 		await page.reload();
 		await page.waitForNetworkIdle();
 
