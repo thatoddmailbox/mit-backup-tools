@@ -120,7 +120,8 @@ export class Gradescope implements Loader {
 					const rowLink = row.querySelector("a") as HTMLAnchorElement;
 
 					if (!rowLink) {
-						throw new Error("Could not find rowLink");
+						// no submission here, skip
+						continue;
 					}
 
 					console.log("row", row);
