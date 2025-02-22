@@ -3,6 +3,7 @@ import { createInterface } from "readline";
 
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
+import { delay } from "../util";
 
 type CanvasMeta = {
 	pageType: "homepage";
@@ -26,11 +27,14 @@ type CanvasMeta = {
 	pageType: "courseFiles";
 	filesDir: string;
 } | {
-	pageType: "assignment";
-	courseDir: string;
+	pageType: "courseAssignments";
+	assignmentsDir: string;
+} | {
+	pageType: "courseAssignment";
 	assignmentDir: string;
 } | {
-	pageType: "assignmentDownload"
+	pageType: "courseAssignmentSubmission";
+	assignmentDir: string;
 };
 
 // https://stackoverflow.com/a/50890409
@@ -115,6 +119,11 @@ export class Canvas implements Loader {
 
 				const courseName = courseLinkSpan.innerText + "-" + courseTermShortName + "-" + courseID;
 				console.log("courseName", courseName);
+
+				// TODO: remove me!!!
+				if (!courseName.includes("24.900")) {
+					continue;
+				}
 
 				const newPageMeta: CanvasMeta = {
 					pageType: "courseHome",
@@ -207,7 +216,6 @@ export class Canvas implements Loader {
 							loaderMeta: newPageMeta
 						});
 					} else if (pageName == "Files") {
-						// TODO: handle me
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseFiles",
 							filesDir: meta.courseDir + "files/"
@@ -222,6 +230,17 @@ export class Canvas implements Loader {
 					} else if (pageName == "Assignments" || pageName == "Quizzes") {
 						// TODO: handle me
 						// quizzess in 6.S983
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseAssignments",
+							assignmentsDir: meta.courseDir + "assignments/"
+						};
+
+						result.push({
+							url: navMenuLink.href,
+							title: newPageMeta.assignmentsDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (pageName == "Grades") {
 						// TODO: handle me
 					} else if (pageName == "Discussions") {
@@ -496,59 +515,145 @@ export class Canvas implements Loader {
 			}, meta);
 		}
 
-		// if (meta.pageType == "assignment") {
-		// 	return await page.evaluate((meta: CanvasMeta) => {
-		// 		if (meta.pageType != "assignment") {
-		// 			throw new Error("This should never happen");
-		// 		}
+		if (meta.pageType == "courseAssignments") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseAssignments") {
+					throw new Error("This should never happen");
+				}
 
-		// 		const assignmentViewerDiv = document.querySelector("div[data-react-class=AssignmentSubmissionViewer]");
-		// 		if (!assignmentViewerDiv) {
-		// 			throw new Error("Could not find assignment viewer div");
-		// 		}
+				const result: SaveRequest[] = [];
 
-		// 		const reactPropsStr = assignmentViewerDiv.attributes.getNamedItem("data-react-props");
-		// 		if (!reactPropsStr) {
-		// 			throw new Error("Could not find react props");
-		// 		}
+				const assignments = document.querySelectorAll("#content .assignment a");
+				for (let i = 0; i < assignments.length; i++) {
+					const assignment = assignments[i] as HTMLAnchorElement;
 
-		// 		const reactProps = JSON.parse(reactPropsStr.value);
+					const assignmentName = assignment.innerText;
+					const assignmentURL = assignment.href;
 
-		// 		const newPageMeta: CanvasMeta = {
-		// 			pageType: "assignmentDownload"
-		// 		};
+					const assignmentURLParts = assignmentURL.split("/");
+					const assignmentID = assignmentURLParts[assignmentURLParts.length - 1];
 
-		// 		console.log("reactProps", reactProps);
-		// 		console.log("reactProps.paths.original_file_path", reactProps.paths.original_file_path);
+					console.log(assignmentName, assignmentURL);
 
-		// 		let req: SaveRequest;
-		// 		if (reactProps.paths.original_file_path != null) {
-		// 			// it's a pdf
-		// 			req = {
-		// 				url: reactProps.paths.original_file_path,
-		// 				title: meta.assignmentDir + "file.pdf",
-		// 				format: "download",
-		// 				loaderMeta: newPageMeta
-		// 			};
-		// 		} else if (reactProps.paths.submission_zip_path != null) {
-		// 			// it's not a pdf
-		// 			req = {
-		// 				url: window.location.origin + reactProps.paths.submission_zip_path,
-		// 				title: meta.assignmentDir + "file.zip",
-		// 				format: "download",
-		// 				loaderMeta: newPageMeta
-		// 			};
-		// 		} else {
-		// 			throw new Error("idk how to download this");
-		// 		}
+					const newPageMeta: CanvasMeta = {
+						pageType: "courseAssignment",
+						assignmentDir: meta.assignmentsDir + "assignment-" + assignmentID + "-" + assignmentName + "/"
+					};
 
-		// 		return [req];
-		// 	}, meta);
-		// }
+					result.push({
+						url: assignmentURL,
+						title: newPageMeta.assignmentDir + "main",
+						format: "archive",
+						loaderMeta: newPageMeta
+					});
+				}
 
-		// if (meta.pageType == "assignmentDownload") {
-		// 	return [];
-		// }
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseAssignment") {
+			return page.evaluate(async (meta: CanvasMeta) => {
+				if (meta.pageType != "courseAssignment") {
+					throw new Error("This should never happen");
+				}
+
+				const sidebarLinks = document.querySelectorAll("#sidebar_content a");
+
+				const result: SaveRequest[] = [];
+
+				for (let i = 0; i < sidebarLinks.length; i++) {
+					const sidebarLink = sidebarLinks[i] as HTMLAnchorElement;
+
+					const sidebarLinkName = sidebarLink.innerText;
+					const sidebarLinkURL = sidebarLink.href;
+
+					if (sidebarLinkName == "Submission Details") {
+						const newPageMeta: CanvasMeta = {
+							pageType: "courseAssignmentSubmission",
+							assignmentDir: meta.assignmentDir
+						};
+
+						result.push({
+							url: sidebarLinkURL,
+							title: meta.assignmentDir + "details",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
+					} else if (sidebarLinkName.indexOf("Download ") == 0) {
+						const newPageMeta: CanvasMeta = {
+							pageType: "genericArchive"
+						};
+
+						const fileName = sidebarLinkName.replace("Download ", "");
+
+						result.push({
+							url: sidebarLinkURL,
+							title: meta.assignmentDir + fileName,
+							format: "download",
+							loaderMeta: newPageMeta
+						});
+					}
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "courseAssignmentSubmission") {
+			const previewFrame = await page.$("#preview_frame");
+			if (!previewFrame) {
+				throw new Error("Could not find preview frame");
+			}
+
+			const previewFrameContent = await previewFrame.contentFrame();
+			if (!previewFrameContent) {
+				throw new Error("Could not find preview frame content");
+			}
+
+			const foundFeedback = await previewFrameContent.evaluate(async () => {
+				const feedbackLink = document.querySelector(".file-upload-submission-attachment a") as HTMLAnchorElement | undefined;
+				if (feedbackLink && feedbackLink.innerText == "View Feedback") {
+					feedbackLink.click();
+
+					await new Promise<void>((resolve) => {
+						setTimeout(() => {
+							resolve();
+						}, 15*1000);
+					});
+
+					return true;
+				}
+
+				return false;
+			});
+
+			if (!foundFeedback) {
+				return [];
+			}
+
+			const docFrame = await previewFrameContent.waitForSelector(".ui-dialog-content iframe");
+			if (!docFrame) {
+				throw new Error("Could not find doc frame");
+			}
+
+			const docFrameContent = await docFrame.contentFrame();
+			if (!docFrameContent) {
+				throw new Error("Could not find doc frame content");
+			}
+
+			const downloadButton = await docFrameContent.waitForSelector(".download-button--button");
+			if (!downloadButton) {
+				throw new Error("Could not find download button");
+			}
+
+			// TODO: intercept download
+			// await downloadButton.click();
+
+			// await delay(60*1000);
+
+			return [];
+		}
 
 		throw new Error("Did not recognize page type " + (meta as any).pageType);
 	}
