@@ -9,7 +9,7 @@ import { Loader } from "./loader/loader";
 import { delay } from "./util";
 
 import { createWriteStream } from "fs";
-import { mkdir, readFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { basename, dirname } from "path/posix";
 
 async function download(browser: Browser, page: Page, url: string, fullPath: string) {
@@ -170,7 +170,7 @@ export function increaseEvilCount() {
 			await delay(item.useDelayWait);
 		}
 
-		loader.preCapture(page, item);
+		await loader.preCapture(page, item);
 
 		console.log("fullPath", fullPath);
 		console.log("dirname(fullPath)", dirname(fullPath));
@@ -183,6 +183,11 @@ export function increaseEvilCount() {
 			landscape: true,
 			path: fullPath + ".pdf"
 		});
+
+		const session = await page.createCDPSession();
+		const { data } = await session.send("Page.captureSnapshot");
+		await writeFile(fullPath + ".mhtml", data);
+		await session.detach();
 
 		const newRequests = await loader.discoverMoreRequests(page, item);
 		for (let j = 0; j < newRequests.length; j++) {
