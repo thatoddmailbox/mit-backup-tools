@@ -21,11 +21,13 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 	console.log("Domain is", domain);
 
 	const cookies = await browser.cookies();
-	console.log("cookies", cookies);
+	// console.log("cookies", cookies);
 	let cookieString = "";
 	for (let i = 0; i < cookies.length; i++){
 		const cookie = cookies[i];
-		if (cookie.domain != domain) {
+		console.log(i, cookie.domain, domain, cookie);
+
+		if (!domain.includes(cookie.domain)) {
 			continue;
 		}
 
@@ -43,6 +45,18 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 				"User-Agent": userAgent
 			},
 		}, (res) => {
+			if (res.headers["set-cookie"]) {
+				const cookieStrings = res.headers["set-cookie"];
+				for (let i = 0; i < cookieStrings.length; i++) {
+					const cookieString = res.headers["set-cookie"][i].split(";")[0];
+					browser.setCookie({
+						name: cookieString.split("=")[0],
+						value: cookieString.split("=")[1],
+						domain: domain
+					});
+				}
+			}
+
 			if (res.statusCode == 302) {
 				const newURL = res.headers.location || "";
 				console.log("Following redirect to", newURL);
