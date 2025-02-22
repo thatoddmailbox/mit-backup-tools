@@ -802,7 +802,17 @@ export class Canvas implements Loader {
 		}
 
 		if (meta.pageType == "coursePages") {
-			return page.evaluate(async (meta: CanvasMeta) => {
+			const existingPages = [];
+			const pageFiles = await readdir(resolve(getBaseOutputPath(), meta.pagesDir));
+			console.log("pageFiles", pageFiles);
+			for (let i = 0; i < pageFiles.length; i++) {
+				const pageFile = pageFiles[i];
+				const pageID = pageFile.replace("_", "/").split(".")[0];
+				existingPages.push(pageID);
+			}
+			console.log("existingPages", existingPages);
+
+			return page.evaluate(async (meta: CanvasMeta, existingPages: string[]) => {
 				if (meta.pageType != "coursePages") {
 					throw new Error("This should never happen");
 				}
@@ -817,6 +827,10 @@ export class Canvas implements Loader {
 					const pageLinkName = pageLink.innerText;
 					const pageLinkURL = pageLink.href;
 
+					if (existingPages.includes(pageLinkName)) {
+						continue;
+					}
+
 					const newPageMeta: CanvasMeta = {
 						pageType: "genericArchive"
 					};
@@ -830,7 +844,7 @@ export class Canvas implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, existingPages);
 		}
 
 		if (meta.pageType == "courseDiscussions") {
