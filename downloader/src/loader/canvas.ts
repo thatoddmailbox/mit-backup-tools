@@ -560,7 +560,7 @@ export class Canvas implements Loader {
 				for (let i = 0; i < fileItems.length; i++) {
 					const fileItem = fileItems[i] as HTMLAnchorElement;
 
-					const fileName = fileItem.innerText;
+					const fileName = fileItem.innerText.replace(/\//g, "_");
 					const fileURL = fileItem.href;
 					const fileIsFolder = fileURL.includes("/folder/");
 
