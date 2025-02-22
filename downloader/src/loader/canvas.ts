@@ -1,5 +1,6 @@
 import { Page } from "puppeteer";
 import { createInterface } from "readline";
+import { readdir } from "fs/promises";
 import { resolve } from "path";
 
 import { Loader } from "./loader";
@@ -378,7 +379,19 @@ export class Canvas implements Loader {
 		}
 
 		if (meta.pageType == "courseAnnouncements") {
-			return await page.evaluate(async (meta: CanvasMeta) => {
+			const existingAnnouncementIDs = [];
+			const announcementFiles = await readdir(resolve(getBaseOutputPath(), meta.announcementsDir));
+			console.log("announcementFiles", announcementFiles);
+			for (let i = 0; i < announcementFiles.length; i++) {
+				const announcementFile = announcementFiles[i];
+				if (announcementFile.startsWith("announcement-")) {
+					const announcementID = announcementFile.replace("/", "").split(".")[0].split("-")[4];
+					existingAnnouncementIDs.push(announcementID);
+				}
+			}
+			console.log("existingAnnouncementIDs", existingAnnouncementIDs);
+
+			return await page.evaluate(async (meta: CanvasMeta, existingAnnouncementIDs: string[]) => {
 				if (meta.pageType != "courseAnnouncements") {
 					throw new Error("This should never happen");
 				}
@@ -425,6 +438,10 @@ export class Canvas implements Loader {
 						const announcementID = linkParts[linkParts.length - 1];
 						console.log("announcementID", announcementID);
 
+						if (existingAnnouncementIDs.indexOf(announcementID) > -1) {
+							continue;
+						}
+
 						// Formatted like "Dec 18, 2021, 5:30 PM"
 						const dateString = (link.parentElement!.parentElement!.querySelector(".ic-item-row__meta-content-timestamp") as HTMLSpanElement).innerText
 						const date = new Date(dateString);
@@ -445,11 +462,23 @@ export class Canvas implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, existingAnnouncementIDs);
 		}
 
 		if (meta.pageType == "courseModules") {
-			return await page.evaluate(async (meta: CanvasMeta) => {
+			const existingModuleIDs = [];
+			const moduleFiles = await readdir(resolve(getBaseOutputPath(), meta.modulesDir));
+			console.log("moduleFiles", moduleFiles);
+			for (let i = 0; i < moduleFiles.length; i++) {
+				const moduleFile = moduleFiles[i];
+				if (moduleFile.startsWith("module-")) {
+					const moduleID = moduleFile.replace("/", "").split(".")[0].split("-")[1];
+					existingModuleIDs.push(moduleID);
+				}
+			}
+			console.log("existingModuleIDs", existingModuleIDs);
+
+			return await page.evaluate(async (meta: CanvasMeta, existingModuleIDs: string[]) => {
 				if (meta.pageType != "courseModules") {
 					throw new Error("This should never happen");
 				}
@@ -474,6 +503,10 @@ export class Canvas implements Loader {
 
 					const itemLinkParts = item.href.split("/");
 					const moduleID = itemLinkParts[itemLinkParts.length - 1];
+
+					if (existingModuleIDs.indexOf(moduleID) > -1) {
+						continue;
+					}
 
 					// possible class names include
 					// attachment
@@ -514,7 +547,7 @@ export class Canvas implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, existingModuleIDs);
 		}
 
 		if (meta.pageType == "courseModuleFile") {
@@ -780,7 +813,17 @@ export class Canvas implements Loader {
 		}
 
 		if (meta.pageType == "courseDiscussions") {
-			return page.evaluate(async (meta: CanvasMeta) => {
+			const existingDiscussions = [];
+			const discussionFiles = await readdir(resolve(getBaseOutputPath(), meta.discussionsDir));
+			console.log("discussionFiles", discussionFiles);
+			for (let i = 0; i < discussionFiles.length; i++) {
+				const discussionFile = discussionFiles[i];
+				const discussion = discussionFile.replace("_", "/").split(".")[0];
+				existingDiscussions.push(discussion);
+			}
+			console.log("existingDiscussions", existingDiscussions);
+
+			return page.evaluate(async (meta: CanvasMeta, existingDiscussions: string[]) => {
 				if (meta.pageType != "courseDiscussions") {
 					throw new Error("This should never happen");
 				}
@@ -794,6 +837,10 @@ export class Canvas implements Loader {
 
 					const discussionLinkName = discussionLink.querySelector("span")!.innerText;
 					const discussionLinkURL = discussionLink.href;
+
+					if (existingDiscussions.indexOf(discussionLinkName) > -1) {
+						continue;
+					}
 
 					const newPageMeta: CanvasMeta = {
 						pageType: "courseDiscussion"
@@ -809,7 +856,7 @@ export class Canvas implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, existingDiscussions);
 		}
 
 		throw new Error("Did not recognize page type " + (meta as any).pageType);
