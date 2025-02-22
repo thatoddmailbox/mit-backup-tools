@@ -129,9 +129,9 @@ export class Canvas implements Loader {
 				console.log("courseName", courseName);
 
 				// TODO: remove me!!!
-				if (!courseName.includes("6.013")) {
-					continue;
-				}
+				// if (!courseName.includes("6.013")) {
+				// 	continue;
+				// }
 
 				const newPageMeta: CanvasMeta = {
 					pageType: "courseHome",
@@ -144,9 +144,6 @@ export class Canvas implements Loader {
 					format: "archive",
 					loaderMeta: newPageMeta
 				});
-
-				// TODO: remove me!!!
-				break;
 			}
 
 			return list;
@@ -228,13 +225,12 @@ export class Canvas implements Loader {
 							announcementsDir: meta.courseDir + "announcements/"
 						};
 
-						// TODO: undo me!
-						// result.push({
-						// 	url: navMenuLink.href,
-						// 	title: newPageMeta.announcementsDir + "main",
-						// 	format: "archive",
-						// 	loaderMeta: newPageMeta
-						// });
+						result.push({
+							url: navMenuLink.href,
+							title: newPageMeta.announcementsDir + "main",
+							format: "archive",
+							loaderMeta: newPageMeta
+						});
 					} else if (pageName == "Modules") {
 						const newPageMeta: CanvasMeta = {
 							pageType: "courseModules",
@@ -394,7 +390,6 @@ export class Canvas implements Loader {
 					throw new Error("Could not find content");
 				}
 
-				// TODO: pagination
 				const pagination = content.querySelector("div[role=navigation]");
 				let pages: (HTMLButtonElement | null)[] = [null];
 				if (pagination) {
