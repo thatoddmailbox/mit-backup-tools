@@ -1,7 +1,10 @@
 import { Page } from "puppeteer";
+import { mkdir, readdir } from "fs/promises";
+import { resolve } from "path";
 
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
+import { getBaseOutputPath } from "../main";
 
 type GradescopeMeta = {
 	pageType: "homepage";
@@ -95,7 +98,12 @@ export class Gradescope implements Loader {
 		if (meta.pageType == "course") {
 			console.log("Time to discover assignments");
 
-			return await page.evaluate((meta: GradescopeMeta) => {
+			const assignmentsDir = resolve(getBaseOutputPath(), meta.courseDir, "assignments");
+			await mkdir(assignmentsDir, { recursive: true });
+			const assignmentFolders = await readdir(assignmentsDir);
+			console.log("assignmentFolders", assignmentFolders);
+
+			return await page.evaluate((meta: GradescopeMeta, assignmentFolders: string[]) => {
 				if (meta.pageType != "course") {
 					throw new Error("This should never happen");
 				}
@@ -127,6 +135,12 @@ export class Gradescope implements Loader {
 					const assignmentName = rowLink.innerText;
 					const assignmentDir = meta.courseDir + "assignments/" + assignmentName + "/";
 
+					if (assignmentFolders.includes(assignmentName)) {
+						// already have it
+						console.log("Looks like we already have", assignmentName);
+						continue;
+					}
+
 					const newPageMeta: GradescopeMeta = {
 						pageType: "assignment",
 						courseDir: meta.courseDir,
@@ -142,7 +156,7 @@ export class Gradescope implements Loader {
 				}
 
 				return result;
-			}, meta);
+			}, meta, assignmentFolders);
 		}
 
 		if (meta.pageType == "assignment") {
