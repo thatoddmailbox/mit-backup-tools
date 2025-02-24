@@ -556,6 +556,10 @@ export class Canvas implements Loader {
 		}
 
 		if (meta.pageType == "courseModuleFile") {
+			// assume it has the doc preview
+			increaseEvilCount();
+			increaseEvilCount();
+
 			return page.evaluate(async (meta: CanvasMeta) => {
 				if (meta.pageType != "courseModuleFile") {
 					throw new Error("This should never happen");
