@@ -153,7 +153,8 @@ export class Gradescope implements Loader {
 
 				const assignmentViewerDiv = document.querySelector("div[data-react-class=AssignmentSubmissionViewer]");
 				if (!assignmentViewerDiv) {
-					throw new Error("Could not find assignment viewer div");
+					console.log("Could not find assignment viewer div, assignment probably not viewable?");
+					return [];
 				}
 
 				const reactPropsStr = assignmentViewerDiv.attributes.getNamedItem("data-react-props");
