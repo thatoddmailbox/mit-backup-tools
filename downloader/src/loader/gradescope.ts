@@ -187,6 +187,14 @@ export class Gradescope implements Loader {
 						format: "download",
 						loaderMeta: newPageMeta
 					};
+				} else if (reactProps.paths.graded_pdf_path != null) {
+					// it's a quiz or something
+					req = {
+						url: window.location.origin + reactProps.paths.graded_pdf_path,
+						title: meta.assignmentDir + "file.pdf",
+						format: "download",
+						loaderMeta: newPageMeta
+					};
 				} else {
 					throw new Error("idk how to download this");
 				}
