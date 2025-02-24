@@ -73,6 +73,12 @@ async function download(browser: Browser, page: Page, url: string, fullPath: str
 				result.catch(reject);
 				return;
 			}
+			if (res.statusCode == 500) {
+				console.log("Got 500 internal server error for ", url);
+				console.log("Continuing...");
+				resolve();
+				return;
+			}
 			if (res.statusCode != 200) {
 				throw new Error("Got unexpected status code " + res.statusCode);
 			}
