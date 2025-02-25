@@ -16,6 +16,8 @@ type ConfluenceMeta = {
 	attachmentsDir: string;
 } | {
 	pageType: "spacePageAttachmentDownload"
+} | {
+	pageType: "spacePageAnalytics"
 };
 
 export class Confluence implements Loader {
@@ -170,8 +172,20 @@ export class Confluence implements Loader {
 					});
 				}
 
-				// TODO: anything else?
-				// TODO: history?
+				// look for analytics
+				const analyticsLink = document.querySelector(".analytics-metadata-button-test") as HTMLAnchorElement | null;
+				if (analyticsLink) {
+					const newPageMeta: ConfluenceMeta = {
+						pageType: "spacePageAnalytics"
+					};
+
+					result.push({
+						url: analyticsLink.href,
+						title: meta.pageDir + "_analytics",
+						format: "archive",
+						loaderMeta: newPageMeta
+					});
+				}
 
 				return result;
 			}, meta);
@@ -208,7 +222,7 @@ export class Confluence implements Loader {
 			}, meta);
 		}
 
-		if (meta.pageType == "spacePageAttachmentDownload") {
+		if (meta.pageType == "spacePageAttachmentDownload" || meta.pageType == "spacePageAnalytics") {
 			// nothing to do
 			return [];
 		}
