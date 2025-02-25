@@ -1,7 +1,20 @@
 import { Page } from "puppeteer";
 
+import { readFile } from "fs/promises";
+
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
+
+type ConfluenceMeta = {
+	pageType: "spaceHome";
+	spaceDir: string;
+} | {
+	pageType: "spacePage";
+	pageDir: string;
+} | {
+	pageType: "attachmentDownload"
+	pageDir: string;
+};
 
 export class Confluence implements Loader {
 	getSlug(): string {
@@ -18,7 +31,28 @@ export class Confluence implements Loader {
 	}
 
 	async buildInitialList(page: Page): Promise<SaveRequest[]> {
-		return [];
+		const confluenceSpacesJSON = await readFile("confluence-spaces.json");
+		const confluenceSpaces = JSON.parse(confluenceSpacesJSON.toString("utf8")) as string[];
+
+		const result: SaveRequest[] = [];
+
+		for (let i = 0; i < confluenceSpaces.length; i++) {
+			const confluenceSpace = confluenceSpaces[i];
+
+			const pageMeta: ConfluenceMeta = {
+				pageType: "spaceHome",
+				spaceDir: confluenceSpace + "/"
+			};
+
+			result.push({
+				url: "https://wikis.mit.edu/confluence/display/" + confluenceSpace,
+				title: confluenceSpace + "/Homepage",
+				format: "archive",
+				loaderMeta: pageMeta
+			});
+		}
+
+		return result;
 	}
 
 	async preCapture(page: Page, req: SaveRequest) {
@@ -26,6 +60,96 @@ export class Confluence implements Loader {
 	}
 
 	async discoverMoreRequests(page: Page, req: SaveRequest): Promise<SaveRequest[]> {
-		return [];
+		const meta = req.loaderMeta as ConfluenceMeta;
+
+		if (meta.pageType == "spaceHome") {
+			// expand everything in the hierarchy
+			// repeat until there's nothing left
+			let somethingLeft = true;
+			while (somethingLeft) {
+				somethingLeft = await page.evaluate(() => {
+					const toggles = document.querySelectorAll(".ia-splitter .plugin_pagetree_children a.plugin_pagetree_childtoggle");
+
+					let foundSomething = false;
+					for (let i = 0; i < toggles.length; i++) {
+						const toggle = toggles[i] as HTMLAnchorElement;
+						const isExpanded = toggle.classList.contains("aui-iconfont-chevron-down");
+						if (isExpanded) {
+							continue;
+						}
+
+						foundSomething = true;
+						toggle.click();
+					}
+
+					return foundSomething;
+				});
+
+				await page.waitForNetworkIdle();
+			}
+
+			// ok, at this point the hierarchy should be open
+			// now we build the list of pages
+			return await page.evaluate((meta: ConfluenceMeta) => {
+				if (meta.pageType != "spaceHome") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const processLevel = (e: HTMLUListElement, prefix: string[], pathPrefix: string) => {
+					for (let i = 0; i < e.children.length; i++) {
+						const child = e.children[i];
+
+						const childLink = child.querySelector(":scope > .plugin_pagetree_children_content a") as HTMLAnchorElement | null;
+						if (!childLink) {
+							throw new Error("This should not happen...");
+						}
+
+						const pageName = childLink.innerText;
+						const pageURL = childLink.href;
+
+						console.log(prefix, pageName, pageURL);
+
+						const pagePath = pathPrefix + pageName.replace(/\//g, "_") + "/";
+
+						const newPageMeta: ConfluenceMeta = {
+							pageType: "spacePage",
+							pageDir: pagePath
+						};
+
+						result.push({
+							url: pageURL,
+							title: pagePath + "index",
+							format: "archive",
+							loaderMeta: newPageMeta
+						})
+
+						const subchildren = child.querySelector(":scope > .plugin_pagetree_children_container > ul.plugin_pagetree_children_list") as HTMLUListElement | null;
+						if (subchildren) {
+							const newPrefix = [...prefix];
+							newPrefix.push(pageName);
+							processLevel(subchildren, newPrefix, pagePath);
+						}
+					}
+				};
+
+				const firstLevel = document.querySelector(".plugin_pagetree > .plugin_pagetree_children_list > .plugin_pagetree_children > ul.plugin_pagetree_children_list");
+				if (!firstLevel) {
+					throw new Error("Could not find first level of hierarchy");
+				}
+				processLevel(firstLevel as HTMLUListElement, [], meta.spaceDir);
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "spacePage") {
+			// TODO: look for attachments
+			// TODO: anything else?
+			return [];
+		}
+
+		throw new Error("Did not recognize page type " + (meta as any).pageType);
 	}
 }
