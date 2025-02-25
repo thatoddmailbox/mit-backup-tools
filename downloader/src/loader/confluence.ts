@@ -12,8 +12,10 @@ type ConfluenceMeta = {
 	pageType: "spacePage";
 	pageDir: string;
 } | {
-	pageType: "attachmentDownload"
-	pageDir: string;
+	pageType: "spacePageAttachments";
+	attachmentsDir: string;
+} | {
+	pageType: "spacePageAttachmentDownload"
 };
 
 export class Confluence implements Loader {
@@ -123,7 +125,7 @@ export class Confluence implements Loader {
 							title: pagePath + "index",
 							format: "archive",
 							loaderMeta: newPageMeta
-						})
+						});
 
 						const subchildren = child.querySelector(":scope > .plugin_pagetree_children_container > ul.plugin_pagetree_children_list") as HTMLUListElement | null;
 						if (subchildren) {
@@ -145,8 +147,69 @@ export class Confluence implements Loader {
 		}
 
 		if (meta.pageType == "spacePage") {
-			// TODO: look for attachments
-			// TODO: anything else?
+			return await page.evaluate((meta: ConfluenceMeta) => {
+				if (meta.pageType != "spacePage") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				// look for attachments
+				const attachmentsLink = document.querySelector("#content-metadata-attachments") as HTMLAnchorElement | null;
+				if (attachmentsLink) {
+					const newPageMeta: ConfluenceMeta = {
+						pageType: "spacePageAttachments",
+						attachmentsDir: meta.pageDir + "_attachments/"
+					};
+
+					result.push({
+						url: attachmentsLink.href,
+						title: newPageMeta.attachmentsDir + "index",
+						format: "archive",
+						loaderMeta: newPageMeta
+					});
+				}
+
+				// TODO: anything else?
+				// TODO: history?
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "spacePageAttachments") {
+			return await page.evaluate((meta: ConfluenceMeta) => {
+				if (meta.pageType != "spacePageAttachments") {
+					throw new Error("This should never happen");
+				}
+
+				const result: SaveRequest[] = [];
+
+				const attachmentLinks = document.querySelectorAll(".attachments tr:not(.hidden) a.filename");
+				for (let i = 0; i < attachmentLinks.length; i++) {
+					const attachmentLink = attachmentLinks[i] as HTMLAnchorElement;
+
+					const attachmentName = attachmentLink.innerText;
+					const attachmentURL = attachmentLink.href;
+
+					const newPageMeta: ConfluenceMeta = {
+						pageType: "spacePageAttachmentDownload"
+					};
+
+					result.push({
+						url: attachmentURL,
+						title: meta.attachmentsDir + attachmentName.replace(/\//g, "_"),
+						format: "download",
+						loaderMeta: newPageMeta
+					});
+				}
+
+				return result;
+			}, meta);
+		}
+
+		if (meta.pageType == "spacePageAttachmentDownload") {
+			// nothing to do
 			return [];
 		}
 
