@@ -1,9 +1,12 @@
 import { Page } from "puppeteer";
 
 import { readFile } from "fs/promises";
+import { readdir } from "fs/promises";
+import { resolve } from "path";
 
 import { Loader } from "./loader";
 import { SaveRequest } from "../saveRequest";
+import { getBaseOutputPath } from "../main";
 
 type ConfluenceMeta = {
 	pageType: "spaceHome";
@@ -92,12 +95,27 @@ export class Confluence implements Loader {
 				await page.waitForNetworkIdle();
 			}
 
+			const existingFiles = await readdir(resolve(getBaseOutputPath(), meta.spaceDir), { recursive: true });
+			console.log("existingFiles", existingFiles);
+			const existingPagesList: string[] = [];
+			for (let i = 0; i < existingFiles.length; i++) {
+				const existingFile = existingFiles[i];
+
+				if (existingFile.endsWith("/index.pdf") && !existingFile.includes("_attachments")) {
+					existingPagesList.push(existingFile.replace("/index.pdf", "") + "/");
+				}
+			}
+			console.log("existingPagesList", existingPagesList);
+			// throw new Error("idk");
+
 			// ok, at this point the hierarchy should be open
 			// now we build the list of pages
-			return await page.evaluate((meta: ConfluenceMeta) => {
+			return await page.evaluate((meta: ConfluenceMeta, existingPagesList: string[]) => {
 				if (meta.pageType != "spaceHome") {
 					throw new Error("This should never happen");
 				}
+
+				const existingPages = new Set<string>(existingPagesList);
 
 				const result: SaveRequest[] = [];
 
@@ -122,12 +140,15 @@ export class Confluence implements Loader {
 							pageDir: pagePath
 						};
 
-						result.push({
-							url: pageURL,
-							title: pagePath + "index",
-							format: "archive",
-							loaderMeta: newPageMeta
-						});
+						if (!existingPages.has(pagePath.replace(meta.spaceDir, ""))) {
+							result.push({
+								url: pageURL,
+								title: pagePath + "index",
+								format: "archive",
+								loaderMeta: newPageMeta,
+								// useDelayWait: 10 *1000
+							});
+						}
 
 						const subchildren = child.querySelector(":scope > .plugin_pagetree_children_container > ul.plugin_pagetree_children_list") as HTMLUListElement | null;
 						if (subchildren) {
@@ -145,7 +166,7 @@ export class Confluence implements Loader {
 				processLevel(firstLevel as HTMLUListElement, [], meta.spaceDir);
 
 				return result;
-			}, meta);
+			}, meta, existingPagesList);
 		}
 
 		if (meta.pageType == "spacePage") {
@@ -168,7 +189,8 @@ export class Confluence implements Loader {
 						url: attachmentsLink.href,
 						title: newPageMeta.attachmentsDir + "index",
 						format: "archive",
-						loaderMeta: newPageMeta
+						loaderMeta: newPageMeta,
+						// useDelayWait: 10 *1000
 					});
 				}
 
@@ -183,7 +205,8 @@ export class Confluence implements Loader {
 						url: analyticsLink.href,
 						title: meta.pageDir + "_analytics",
 						format: "archive",
-						loaderMeta: newPageMeta
+						loaderMeta: newPageMeta,
+						// useDelayWait: 10 *1000
 					});
 				}
 
