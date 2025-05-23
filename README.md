@@ -86,6 +86,7 @@ There are some hacks in the code to work around this, but it's not perfect. If y
 * Confluence requires additional configuration (see service-specific notes below)
 * The scripts handle pagination and navigation automatically; don't click on anything in the browser window that comes up!!
 * Downloads are incremental - already downloaded content won't be re-downloaded. This means if a script crashes or get stuck, you can re-run it and it'll pick up where it left off.
+	* Please note: the algorithm is not super smart; it just looks if the PDF file exists. So if you, for example, lose internet connection halfway through, you should check that it hasn't tried to save an empty file. (since that would fool the incremental logic into not redownloading it)
 
 ### Service-specific notes
 
