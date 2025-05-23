@@ -66,14 +66,19 @@ npm run start-gradescope
 npm run start-websis
 ```
 
-The scripts will:
+Each script will:
 1. Launch a browser window (visible, not headless)
 2. Load your authentication cookies
 3. Navigate through the service's pages
 4. Save content in the `downloader/output/<service>` directory:
    * Pages are saved as both PDF and MHTML (multipart HTML) files
-   * Files (like DOCX, PDFs) are downloaded directly
+   * Files (like DOCX, PDFs) are downloaded directly where possible
    * Content is organized in a directory structure matching the service's hierarchy
+
+### Known issues
+Puppeteer (the library used for web browsing) seems to have some issues with MHTML saving. This means that, on some pages, it will get stuck. Usually this happens on Canvas pages with an embedded Google Doc.
+
+There are some hacks in the code to work around this, but it's not perfect. If your script does get stuck, the easiest fix is to just kill it (Control-C) and restart it. The script will pick up where it left off. You might not get the MHTML file for that page unfortunately, but you can always save the MHTML yourself in Chrome.
 
 ### Notes
 * The browser window will stay open for an hour after completion (to allow manual inspection if needed)
