@@ -89,6 +89,9 @@ Puppeteer (the library used for web browsing) seems to have some issues with MHT
 
 There are some hacks in the code to work around this, but it's not perfect. If your script does get stuck, the easiest fix is to just kill it (Control-C) and restart it. The script will pick up where it left off. You might not get the MHTML file for that page unfortunately, but you can always save the MHTML yourself in Chrome.
 
+### Changing the domain
+If you go to a different school, you will need to change the domain names. The easiest way to do this is to open the relevant file in the `downloader/src/loader` directory (for example, `canvas.ts`) and do find-and-replace (for example, from `canvas.mit.edu` to whatever your school uses). You will also need to update the `cookies-<service>.json` file; each cookie is associated with a domain, and you will need to change those to your domain.
+
 ### Service-specific notes
 
 #### Canvas
