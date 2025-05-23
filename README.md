@@ -24,13 +24,13 @@ To archive these services, I used some existing tools.
 
 ### Setup
 1. Navigate to the `downloader` directory:
-   ```bash
-   cd downloader
-   ```
+	 ```bash
+	 cd downloader
+	 ```
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+	 ```bash
+	 npm install
+	 ```
 
 ### Authentication
 The scripts require authentication cookies to access MIT services. You'll need to provide cookies for each service you want to download from.
@@ -72,9 +72,9 @@ Each script will:
 2. Load your authentication cookies
 3. Navigate through the service's pages
 4. Save content in the `downloader/output/<service>` directory:
-   * Pages are saved as both PDF and MHTML (multipart HTML) files
-   * Files (like DOCX, PDFs) are downloaded directly where possible
-   * Content is organized in a directory structure matching the service's hierarchy
+	 * Pages are saved as both PDF and MHTML (multipart HTML) files
+	 * Files (like DOCX, PDFs) are downloaded directly where possible
+	 * Content is organized in a directory structure matching the service's hierarchy
 
 ### Known issues
 Puppeteer (the library used for web browsing) seems to have some issues with MHTML saving. This means that, on some pages, it will get stuck. Usually this happens on Canvas pages with an embedded Google Doc.
@@ -92,13 +92,13 @@ There are some hacks in the code to work around this, but it's not perfect. If y
 
 #### Canvas
 * Downloads course content including:
-  * Course homepages
-  * Announcements
-  * Modules
-  * Files
-  * Assignments
-  * Discussions
-  * Grades
+	* Course homepages
+	* Announcements
+	* Modules
+	* Files
+	* Assignments
+	* Discussions
+	* Grades
 
 ##### Page names
 Every Canvas course has a set of pages that are added by the teacher. The script recognizes a page's type by its name. (For example, the "Announcements" page is handled specially to ensure we capture all the announcements.)
@@ -107,30 +107,30 @@ If your Canvas course has a page name that isn't recognized, the script will err
 
 #### Confluence
 * Requires `confluence-spaces.json` listing spaces to download
-  * This belongs in the `downloader/` folder
-  * It should be a JSON file, looking something like this: `["SomeCoolWiki", "OtherWiki"]`
-  * You can find the space name in the URL of its pages
+	* This belongs in the `downloader/` folder
+	* It should be a JSON file, looking something like this: `["SomeCoolWiki", "OtherWiki"]`
+	* You can find the space name in the URL of its pages
 * Downloads:
-  * Space homepages
-  * All pages in each space
-  * Page attachments
-  * Page analytics
+	* Space homepages
+	* All pages in each space
+	* Page attachments
+	* Page analytics
 
 #### Gradescope
 * Downloads:
-  * Course homepages
-  * Assignments
-  * Submission files
-  * Grade reports
+	* Course homepages
+	* Assignments
+	* Submission files
+	* Grade reports
 
 #### WebSIS
 * Downloads key student information pages:
-  * Academic record
-  * Registration status
-  * Grade reports
-  * Degree audit
-  * Biographic records
-  * Emergency contacts
+	* Academic record
+	* Registration status
+	* Grade reports
+	* Degree audit
+	* Biographic records
+	* Emergency contacts
 
 #### EECSIS
 * Downloads EECS-specific course, checklist, and grade information
