@@ -107,7 +107,7 @@ If you go to a different school, you will need to change the domain names. The e
 ##### Page names
 Every Canvas course has a set of pages that are added by the teacher. The script recognizes a page's type by its name. (For example, the "Announcements" page is handled specially to ensure we capture all the announcements.)
 
-If your Canvas course has a page name that isn't recognized, the script will error out. You can fix this by adding the page to [downloader/src/loader/canvas.ts](./downloader/src/loader/canvas.ts#L327). Most likely, you will want the "generic" archive type, which just saves that individual page and nothing else. In that case, you can add the page name to the list starting on line 327 of the canvas.ts file.
+If your Canvas course has a page name that isn't recognized, the script will error out. You can fix this by adding the page to [downloader/src/loader/canvas.ts](./downloader/src/loader/canvas.ts#L322). Most likely, you will want the "generic" archive type, which just saves that individual page and nothing else. In that case, you can add the page name to the list starting on line 322 of the canvas.ts file.
 
 #### Confluence
 * Requires `confluence-spaces.json` listing spaces to download
