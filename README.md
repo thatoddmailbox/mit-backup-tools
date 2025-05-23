@@ -13,7 +13,7 @@ Pages are captured as PDF and MHTML (multipart HTML; it's an HTML file that incl
 ### Honorable mentions
 To archive these services, I used some existing tools.
 
-* Email: [isync](https://wiki.archlinux.org/title/Isync)
+* Email: [isync](https://wiki.archlinux.org/title/Isync) (with oama for XOAUTH2, see the linked page for details)
 * Google Drive: [rclone](https://rclone.org/)
 
 ## Usage
