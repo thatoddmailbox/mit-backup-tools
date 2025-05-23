@@ -84,7 +84,7 @@ There are some hacks in the code to work around this, but it's not perfect. If y
 ### Notes
 * The browser window will stay open for an hour after completion (to allow manual inspection if needed)
 * Confluence requires additional configuration (see service-specific notes below)
-* The scripts handle pagination and navigation automatically
+* The scripts handle pagination and navigation automatically; don't click on anything in the browser window that comes up!!
 * Downloads are incremental - already downloaded content won't be re-downloaded. This means if a script crashes or get stuck, you can re-run it and it'll pick up where it left off.
 
 ### Service-specific notes
