@@ -76,17 +76,18 @@ Each script will:
 	 * Files (like DOCX, PDFs) are downloaded directly where possible
 	 * Content is organized in a directory structure matching the service's hierarchy
 
-### Known issues
-Puppeteer (the library used for web browsing) seems to have some issues with MHTML saving. This means that, on some pages, it will get stuck. Usually this happens on Canvas pages with an embedded Google Doc.
-
-There are some hacks in the code to work around this, but it's not perfect. If your script does get stuck, the easiest fix is to just kill it (Control-C) and restart it. The script will pick up where it left off. You might not get the MHTML file for that page unfortunately, but you can always save the MHTML yourself in Chrome.
-
-### Notes
+## Notes
+### Random tips
 * The browser window will stay open for an hour after completion (to allow manual inspection if needed)
 * Confluence requires additional configuration (see service-specific notes below)
 * The scripts handle pagination and navigation automatically; don't click on anything in the browser window that comes up!!
 * Downloads are incremental - already downloaded content won't be re-downloaded. This means if a script crashes or get stuck, you can re-run it and it'll pick up where it left off.
 	* Please note: the algorithm is not super smart; it just looks if the PDF file exists. So if you, for example, lose internet connection halfway through, you should check that it hasn't tried to save an empty file. (since that would fool the incremental logic into not redownloading it)
+
+### Known issues
+Puppeteer (the library used for web browsing) seems to have some issues with MHTML saving. This means that, on some pages, it will get stuck. Usually this happens on Canvas pages with an embedded Google Doc.
+
+There are some hacks in the code to work around this, but it's not perfect. If your script does get stuck, the easiest fix is to just kill it (Control-C) and restart it. The script will pick up where it left off. You might not get the MHTML file for that page unfortunately, but you can always save the MHTML yourself in Chrome.
 
 ### Service-specific notes
 
