@@ -44,7 +44,7 @@ The scripts require authentication cookies to access MIT services. You'll need t
    - `cookies-eecsis.json` for EECSIS
    - `cookies-confluence.json` for Confluence
 
-For Confluence specifically, you'll also need to create a `confluence-spaces.json` file listing the spaces you want to download.
+For Confluence specifically, you'll also need to create a `confluence-spaces.json` file listing the spaces you want to download. See the service-specific notes below.
 
 ### Running the scripts
 Each service has its own script. Run them from the `downloader` directory:
@@ -77,9 +77,9 @@ The scripts will:
 
 ### Notes
 * The browser window will stay open for an hour after completion (to allow manual inspection if needed)
-* Some services may require additional configuration (see service-specific notes below)
+* Confluence requires additional configuration (see service-specific notes below)
 * The scripts handle pagination and navigation automatically
-* Downloads are incremental - already downloaded content won't be re-downloaded
+* Downloads are incremental - already downloaded content won't be re-downloaded. This means if a script crashes or get stuck, you can re-run it and it'll pick up where it left off.
 
 ### Service-specific notes
 
@@ -95,6 +95,9 @@ The scripts will:
 
 #### Confluence
 * Requires `confluence-spaces.json` listing spaces to download
+  * This belongs in the `downloader/` folder
+  * It should be a JSON file, looking something like this: `["SomeCoolWiki", "OtherWiki"]`
+  * You can find the space name in the URL of its pages
 * Downloads:
   * Space homepages
   * All pages in each space
