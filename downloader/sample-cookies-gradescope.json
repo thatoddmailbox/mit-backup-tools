@@ -1,0 +1,32 @@
+[
+	{
+		"name": "_gradescope_session",
+		"value": "[fill me in]",
+		"domain": "www.gradescope.com",
+		"path": "/",
+		"expires": -1,
+		"size": 755,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	},
+	{
+		"name": "signed_token",
+		"value": "[fill me in]",
+		"domain": "www.gradescope.com",
+		"path": "/",
+		"expires": -1,
+		"size": 1155,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	}
+]

@@ -1,0 +1,47 @@
+[
+	{
+		"name": "canvas_session",
+		"value": "[fill me in]",
+		"domain": "canvas.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"size": 926,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	},
+	{
+		"name": "_legacy_normandy_session",
+		"value": "[fill me in]",
+		"domain": "canvas.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"size": 936,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	},
+	{
+		"name": "inst-fs-session.sig",
+		"value": "[fill me in]",
+		"domain": ".inst-fs-iad-prod.inscloudgate.net",
+		"path": "/",
+		"expires": -1,
+		"size": 46,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	}
+]

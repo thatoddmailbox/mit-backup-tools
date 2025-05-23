@@ -1,0 +1,30 @@
+[
+	{
+		"name": "JSESSIONID",
+		"value": "[fill me in]",
+		"domain": "wikis.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	},
+	{
+		"name": "_shibsession_64656661756c7468747470733a2f2f77696b69732e6d69742e6564752f73686962626f6c657468",
+		"value": "[fill me in]",
+		"domain": "wikis.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	}
+]

@@ -1,0 +1,32 @@
+[
+	{
+		"name": "BIGipServer~ops~websis-ts-https",
+		"value": "[fill me in]",
+		"domain": "student.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"size": 52,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	},
+	{
+		"name": "_shibsession_64656661756c7468747470733a2f2f73747564656e742e6d69742e6564752f73686962626f6c657468",
+		"value": "[fill me in]",
+		"domain": "student.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"size": 128,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	}
+]

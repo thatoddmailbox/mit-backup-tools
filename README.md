@@ -33,16 +33,17 @@ To archive these services, I used some existing tools.
    ```
 
 ### Authentication
-The scripts require authentication cookies to access MIT services. You'll need to provide cookies for each service you want to download from:
+The scripts require authentication cookies to access MIT services. You'll need to provide cookies for each service you want to download from.
 
-1. Log into each service in your browser (Canvas, Gradescope, etc.)
-2. Use your browser's developer tools to export cookies
-3. Save the cookies as JSON files in the `downloader` directory:
-   - `cookies-canvas.json` for Canvas
-   - `cookies-gradescope.json` for Gradescope
-   - `cookies-websis.json` for WebSIS
-   - `cookies-eecsis.json` for EECSIS
-   - `cookies-confluence.json` for Confluence
+You provide these cookies in a JSON file. To make it easier, I have included sample cookie files for each service, with the minimum required cookies. You will need to fill in the values, like so:
+
+1. In `downloader/`, copy the `sample-cookies-<service>.json` file to `cookies-<service>.json`
+2. Log into the service in your browser (Canvas, Gradescope, etc.)
+3. Open your browser's developer tools and go to the "Cookies" section (in Chrome this is in the Application tab, in Firefox it is in the Storage tab)
+4. Look at your `cookies-<service>.json`. There will be a few cookies, each with the value set to `[fill me in]`. Copy the value of each cookie from your browser into the JSON file.
+	* Tip: in your browser, if you double click the cookie value, it should select the whole thing. Some values are quite long and need to be copied exactly.
+
+When you run the script, the first thing it does is check if you are logged in. If you aren't (which usually means you set up the cookies wrong, or your cookies have expired), then you'll get a `Loader said you aren't logged in` error.
 
 For Confluence specifically, you'll also need to create a `confluence-spaces.json` file listing the spaces you want to download. See the service-specific notes below.
 

@@ -1,0 +1,17 @@
+[
+	{
+		"name": "_shibsession_64656661756c7468747470733a2f2f6565637369732e6d69742e6564752f73686962626f6c657468",
+		"value": "[fill me in]",
+		"domain": "eecsis.mit.edu",
+		"path": "/",
+		"expires": -1,
+		"size": 126,
+		"httpOnly": true,
+		"secure": true,
+		"session": true,
+		"priority": "Medium",
+		"sameParty": false,
+		"sourceScheme": "Secure",
+		"sourcePort": 443
+	}
+]
