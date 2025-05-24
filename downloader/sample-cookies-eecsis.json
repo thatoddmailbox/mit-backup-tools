@@ -5,7 +5,6 @@
 		"domain": "eecsis.mit.edu",
 		"path": "/",
 		"expires": -1,
-		"size": 126,
 		"httpOnly": true,
 		"secure": true,
 		"session": true,
